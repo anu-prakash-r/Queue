@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import * as SecureStore from 'expo-secure-store';
+import { useGetProfileQuery } from '@/store/api/authApi';
 
 type AuthContextProps = {
   token: string | null;
@@ -10,12 +11,41 @@ type AuthContextProps = {
 
 const AuthContext = createContext<AuthContextProps | undefined>(undefined);
 
+// Helper to decode JWT payload (base64 URL safe)
+const decodePayload = (jwt: string): Record<string, unknown> => {
+  try {
+    const [, payload = ''] = jwt.split('.');
+
+    if (!payload) {
+      return {};
+    }
+
+    const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
+
+    const padded = base64 + '='.repeat((4 - (base64.length % 4)) % 4);
+
+    const decoded =
+      typeof atob === 'function'
+        ? atob(padded)
+        : Buffer.from(padded, 'base64').toString('utf8');
+
+    return JSON.parse(decoded) as Record<string, unknown>;
+  } catch {
+    return {};
+  }
+};
+
+const isSuperAdminRole = (role?: unknown): boolean => {
+  return typeof role === 'string' && role.trim().toLowerCase() === 'superadmin';
+};
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = async () => {
     await SecureStore.deleteItemAsync('accessToken');
     await SecureStore.deleteItemAsync('refreshToken');
     setToken(null);
   };
+
   const [token, setToken] = useState<string | null>(null);
 
   // Load token from storage on mount
@@ -23,7 +53,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const loadToken = async () => {
       try {
         const access = await SecureStore.getItemAsync('accessToken');
-        const refresh = await SecureStore.getItemAsync('refreshToken');
         if (access) setToken(access);
         // optionally store refresh in state if needed later
       } catch (e) {
@@ -33,18 +62,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     loadToken();
   }, []);
 
-  // Helper to decode JWT payload (base64 URL safe)
-  const decodePayload = (jwt: string) => {
-    try {
-      const [, payload] = jwt.split('.');
-      const decoded = Buffer.from(payload, 'base64').toString('utf8');
-      return JSON.parse(decoded);
-    } catch {
-      return {};
-    }
-  };
+  const { data: profileResponse } = useGetProfileQuery(undefined, {
+    skip: !token,
+  });
 
-  // Persist token changes and compute admin flag
+  // Determine if current token belongs to a super admin.
+  // The profile endpoint is the authoritative source; the JWT payload is a fallback.
+  const isSuperAdmin = token
+    ? isSuperAdminRole(profileResponse?.data?.user?.role) ||
+      isSuperAdminRole(decodePayload(token).role)
+    : false;
+
+  // Persist token changes
   const updateToken = async (t: string | null) => {
     try {
       if (t) {
@@ -58,10 +87,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
     setToken(t);
   };
-
-  // Determine if current token belongs to a super admin (assumes JWT includes role field)
-  const isSuperAdmin = token ? (decodePayload(token).role === 'superadmin') : false;
-
 
   return (
     <AuthContext.Provider

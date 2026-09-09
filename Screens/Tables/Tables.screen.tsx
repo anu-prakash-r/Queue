@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
   ActivityIndicator,
@@ -14,9 +14,11 @@ import { StatusBar } from 'expo-status-bar';
 import { router, useFocusEffect } from 'expo-router';
 import Toast from 'react-native-toast-message';
 
-import { ApiError } from '@/services/api';
-
-import { deleteTable, getTables, TableItem } from '@/services/tableApi';
+import {
+  useGetTablesQuery,
+  useDeleteTableMutation,
+  TableItem,
+} from '@/store/api/tableApi';
 import TableStatusModal from '@/components/Tables/TableStatusModal';
 import TablesHeader from '@/components/Tables/TableHeader';
 import TableSearch from '@/components/Tables/TableSearch';
@@ -26,22 +28,31 @@ import TablesFooter from '@/components/Tables/TablesFooter';
 import ConfirmationModal from '@/components/ConfirmationModal/ConfirmationModal';
 
 import { useAuth } from '@/contexts/AuthContext';
+import {
+  TablesScreenSkeleton,
+  TableSummarySkeleton,
+} from '@/components/SkeletonLoader/TablesScreenSkeleton';
 
 export default function TablesScreen() {
   const { token } = useAuth();
 
-  const [tables, setTables] = useState<TableItem[]>([]);
+  const {
+    data: tablesData,
+    isLoading: loading,
+    error,
+    refetch: fetchTables,
+  } = useGetTablesQuery(undefined, { skip: !token });
 
-  const [summary, setSummary] = useState({
-    total_tables: 0,
-    available: 0,
-    occupied: 0,
-    reserved: 0,
-  });
+  const [deleteTable, { isLoading: deleteLoading }] = useDeleteTableMutation();
 
-  const [loading, setLoading] = useState(true);
+  const tables = tablesData?.tables ?? [];
 
-  const [error, setError] = useState<string | null>(null);
+  const summary = {
+    total_tables: tablesData?.summary?.total_tables ?? 0,
+    available: tablesData?.summary?.available ?? 0,
+    occupied: tablesData?.summary?.occupied ?? 0,
+    reserved: tablesData?.summary?.reserved ?? 0,
+  };
 
   const [search, setSearch] = useState('');
 
@@ -54,66 +65,27 @@ export default function TablesScreen() {
 
   const [deleteTarget, setDeleteTarget] = useState<TableItem | null>(null);
 
-  const [deleteLoading, setDeleteLoading] = useState(false);
-  const fetchTables = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
+  const errorText = error ? 'Unable to load tables. Please try again.' : '';
 
-      const response = await getTables();
+  useFocusEffect(
+    useCallback(() => {
+      if (token) {
+        fetchTables();
+      }
+    }, [token, fetchTables]),
+  );
 
-      setTables(Array.isArray(response.tables) ? response.tables : []);
-
-      setSummary({
-        total_tables:
-          response.summary?.total_tables ?? response.tables?.length ?? 0,
-
-        available: response.summary?.available ?? 0,
-
-        occupied: response.summary?.occupied ?? 0,
-
-        reserved: response.summary?.reserved ?? 0,
-      });
-
+  useEffect(() => {
+    if (tablesData) {
       setLastUpdated(
         new Date().toLocaleTimeString([], {
           hour: '2-digit',
           minute: '2-digit',
         }),
       );
-    } catch (err: unknown) {
-      let msg = 'Network error while fetching tables.';
-
-      if (err instanceof ApiError) {
-        msg = err.message;
-      } else if (err instanceof Error) {
-        msg = err.message;
-      } else {
-        console.log('UNKNOWN ERROR:', err);
-      }
-
-      setError(msg);
-
-      Toast.show({
-        type: 'error',
-        text1: 'Unable to Load Tables',
-        text2: msg,
-        visibilityTime: 4000,
-      });
-    } finally {
-      setLoading(false);
     }
-  }, []);
+  }, [tablesData]);
 
-  useFocusEffect(
-    useCallback(() => {
-      fetchTables();
-    }, [fetchTables]),
-  );
-
-  /**
-   * Search + Sort
-   */
   const filteredTables = useMemo(() => {
     const searchText = search.toLowerCase().trim();
 
@@ -134,9 +106,6 @@ export default function TablesScreen() {
       });
   }, [tables, search, sortAscending]);
 
-  /**
-   * Summary values
-   */
   const total = summary.total_tables;
 
   const available = summary.available;
@@ -144,10 +113,6 @@ export default function TablesScreen() {
   const occupied = summary.occupied;
 
   const reserved = summary.reserved;
-
-  /**
-   * Table press
-   */
 
   const handleEditTable = (table: TableItem) => {
     router.push({
@@ -177,17 +142,11 @@ export default function TablesScreen() {
     const tableId = deleteTarget.id;
 
     try {
-      setDeleteLoading(true);
-
-      const response = await deleteTable(String(tableId), token);
+      const response = await deleteTable(String(tableId)).unwrap();
 
       const failed = Boolean(response && response.success === false);
 
       if (!failed) {
-        setTables(prev =>
-          Array.isArray(prev) ? prev.filter(item => item.id !== tableId) : [],
-        );
-
         Toast.show({
           type: 'success',
           text1: 'Table Deleted',
@@ -209,9 +168,7 @@ export default function TablesScreen() {
     } catch (error: unknown) {
       let message = 'Network error while deleting the table.';
 
-      if (error instanceof ApiError) {
-        message = error.message;
-      } else if (error instanceof Error) {
+      if (error instanceof Error) {
         message = error.message;
       }
 
@@ -221,8 +178,6 @@ export default function TablesScreen() {
         text2: message,
         visibilityTime: 4000,
       });
-    } finally {
-      setDeleteLoading(false);
     }
   };
 
@@ -257,13 +212,16 @@ export default function TablesScreen() {
             console.log('Filter');
           }}
         />
-
-        <TableSummary
-          total={total}
-          available={available}
-          occupied={occupied}
-          reserved={reserved}
-        />
+        {loading ? (
+          <TableSummarySkeleton />
+        ) : (
+          <TableSummary
+            total={total}
+            available={available}
+            occupied={occupied}
+            reserved={reserved}
+          />
+        )}
 
         <View className='mt-7 flex-row items-center justify-between px-5'>
           <Text className='text-[16px] font-bold text-[#18182E]'>
@@ -292,15 +250,8 @@ export default function TablesScreen() {
 
         <View className='mt-5 px-5'>
           {loading ? (
-            <View className='items-center py-20'>
-              <ActivityIndicator size='large' color='#35116B' />
-
-              <Text className='mt-3 text-[12px] text-[#99929D]'>
-                Loading tables...
-              </Text>
-            </View>
+            <TablesScreenSkeleton />
           ) : error ? (
-            /* Error */
             <View className='items-center rounded-2xl bg-white px-6 py-16'>
               <View className='h-16 w-16 items-center justify-center rounded-full bg-[#F1EAF5]'>
                 <MaterialIcons name='error-outline' size={32} color='#35116B' />
@@ -311,12 +262,12 @@ export default function TablesScreen() {
               </Text>
 
               <Text className='mt-1 text-center text-[12px] text-[#99929D]'>
-                {error}
+                {errorText}
               </Text>
 
               <TouchableOpacity
                 activeOpacity={0.7}
-                onPress={fetchTables}
+                onPress={() => fetchTables()}
                 className='mt-5 rounded-xl bg-[#35116B] px-5 py-3'
               >
                 <Text className='text-[12px] font-semibold text-white'>
@@ -325,7 +276,6 @@ export default function TablesScreen() {
               </TouchableOpacity>
             </View>
           ) : filteredTables.length === 0 ? (
-            /* Empty */
             <View className='items-center rounded-2xl bg-white px-6 py-16'>
               <View className='h-16 w-16 items-center justify-center rounded-full bg-[#F1EAF5]'>
                 <MaterialIcons

@@ -12,6 +12,7 @@ import { StatusBar } from 'expo-status-bar';
 
 import QueueSvg from '@/assets/Svg/Queue.svg';
 import * as SecureStore from 'expo-secure-store';
+import { useAuth } from '@/contexts/AuthContext';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -20,6 +21,9 @@ const SVG_ASPECT = 1024 / 1536;
 
 export default function SplashScreenComponent() {
   const { width, height } = useWindowDimensions();
+  const { isSuperAdmin } = useAuth();
+  const isSuperAdminRef = useRef(isSuperAdmin);
+  isSuperAdminRef.current = isSuperAdmin;
   const fade = useRef(new Animated.Value(0)).current;
 
   const logoWidth = Math.min(width * 0.78, 360);
@@ -36,7 +40,7 @@ export default function SplashScreenComponent() {
       try {
         const token = await SecureStore.getItemAsync('accessToken');
         if (token) {
-          router.replace('/home');
+          router.replace(isSuperAdminRef.current ? '/owners' : '/home');
         } else {
           router.replace('/onboard');
         }

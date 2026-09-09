@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 
 import {
   ActivityIndicator,
@@ -13,7 +13,7 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 
-import { getProfile } from '@/services/authApi';
+import { useGetProfileQuery } from '@/store/api/authApi';
 import { useAuth } from '@/contexts/AuthContext';
 
 type Profile = {
@@ -27,43 +27,22 @@ type Profile = {
 export default function ProfileScreen() {
   const { logout, token } = useAuth();
 
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { data: response, isLoading: loading } = useGetProfileQuery(undefined, {
+    skip: !token,
+  });
 
-  const loadProfile = async () => {
-    try {
-      setLoading(true);
+  const data = response?.data;
 
-      if (!token) {
-        setProfile(null);
-        return;
-      }
-
-      const response = await getProfile(token);
-
-      if (response.success && response.data) {
-        setProfile({
-          name: response.data.user.name,
-          email: response.data.user.email,
-          mobile: response.data.user.mobile_number,
-          restaurant: response.data.restaurant?.name ?? '',
-          role: response.data.user.role,
-        });
-      } else {
-        setProfile(null);
-      }
-    } catch (error) {
-      console.log('GET PROFILE ERROR:', error);
-
-      Alert.alert('Error', 'Unable to load profile details.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadProfile();
-  }, [token]);
+  const profile: Profile | null =
+    response?.success && data
+      ? {
+          name: data.user.name,
+          email: data.user.email,
+          mobile: data.user.mobile_number,
+          restaurant: data.restaurant?.name ?? '',
+          role: data.user.role,
+        }
+      : null;
 
   const handleEditProfile = () => {
     Alert.alert('Edit Profile', 'Edit Profile clicked');
@@ -164,7 +143,6 @@ export default function ProfileScreen() {
                     <MaterialIcons name='add' size={20} color='#442F52' />
                   </TouchableOpacity>
                 ) : (
-                  /* Edit Profile */
                   <TouchableOpacity
                     activeOpacity={0.7}
                     onPress={handleEditProfile}

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
-import { TableItem } from '@/services/tableApi';
+import { TableItem } from '@/store/api/tableApi';
 
 const statusConfig = {
   available: {
@@ -66,7 +66,6 @@ export default function TableCard({
   return (
     <View className='mb-4 overflow-hidden rounded-xl border border-[#E5E1EA] bg-white'>
       <View className='flex-row'>
-        {/* FULL STATUS BORDER */}
         <View
           className='w-[4px]'
           style={{
@@ -75,23 +74,19 @@ export default function TableCard({
         />
 
         <View className='flex-1'>
-          {/* MAIN CARD */}
           <TouchableOpacity
             activeOpacity={0.8}
             onPress={handleToggle}
             className='min-h-[86px] flex-row items-center'
           >
-            {/* ICON */}
             <View className='w-[64px] items-center justify-center'>
               <View className='h-[36px] w-[42px] items-center justify-center'>
                 <FontAwesome5 name='chair' size={25} color={config.color} />
               </View>
             </View>
 
-            {/* DIVIDER */}
             <View className='h-[54px] w-[1px] bg-[#E4DFE9]' />
 
-            {/* TABLE INFO */}
             <View className='flex-1 py-4 pl-4'>
               <Text className='text-[18px] font-bold text-[#18182E]'>
                 T{table.table_number}
@@ -102,7 +97,6 @@ export default function TableCard({
               </Text>
             </View>
 
-            {/* RIGHT INFO */}
             <View className='mr-2 items-end'>
               <View
                 className='rounded-xl px-3 py-2'
@@ -136,7 +130,6 @@ export default function TableCard({
               </View>
             </View>
 
-            {/* ARROW */}
             <View className='w-[42px] items-center justify-center'>
               <MaterialIcons
                 name={expanded ? 'keyboard-arrow-up' : 'chevron-right'}
@@ -146,7 +139,6 @@ export default function TableCard({
             </View>
           </TouchableOpacity>
 
-          {/* EXPANDED ACTIONS */}
           {expanded && (
             <View className='border-t border-[#E5E1EA] px-5 py-5'>
               <View className='flex-row items-center justify-end'>

@@ -1,4 +1,11 @@
-import { HomeSvg, Profile, Queue, Table, Manage } from '@/assets/Svg/NavBar';
+import {
+  HomeSvg,
+  Profile,
+  Queue,
+  Table,
+  Manage,
+  Owners,
+} from '@/assets/Svg/NavBar';
 
 import {
   DrawerContentComponentProps,
@@ -46,6 +53,12 @@ const DRAWER_ITEMS = [
     icon: Manage,
   },
   {
+    label: 'Owners',
+    href: '/(app)/(tabs)/owners' as const,
+    match: 'owners',
+    icon: Owners,
+  },
+  {
     label: 'Profile',
     href: '/(app)/(tabs)/profile' as const,
     match: 'profile',
@@ -60,8 +73,8 @@ export default function AppDrawerContent(props: DrawerContentComponentProps) {
   const { name, restaurant } = useUserProfile();
 
   const drawerItems = isSuperAdmin
-    ? DRAWER_ITEMS
-    : DRAWER_ITEMS.filter(item => item.match !== 'profile');
+    ? DRAWER_ITEMS.filter(item => item.match === 'owners' || item.match === 'profile')
+    : DRAWER_ITEMS.filter(item => item.match !== 'owners' && item.match !== 'profile');
 
   const handleLogout = () => {
     Alert.alert('Logout', 'Are you sure you want to logout?', [
