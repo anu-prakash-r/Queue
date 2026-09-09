@@ -32,10 +32,6 @@ export default function CreateOwnerScreen() {
     ownerId?: string;
   }>();
 
-  // =====================================================
-  // FORM STATES
-  // =====================================================
-
   const [name, setName] = useState('');
 
   const [mobileNumber, setMobileNumber] = useState('');
@@ -56,10 +52,6 @@ export default function CreateOwnerScreen() {
 
   const [keyboardHeight, setKeyboardHeight] = useState(0);
 
-  // =====================================================
-  // VALIDATION ERRORS
-  // =====================================================
-
   const [errors, setErrors] = useState({
     name: false,
     mobileNumber: false,
@@ -70,10 +62,6 @@ export default function CreateOwnerScreen() {
     city: false,
     address: false,
   });
-
-  // =====================================================
-  // KEYBOARD HEIGHT
-  // =====================================================
 
   useEffect(() => {
     const showSubscription = Keyboard.addListener('keyboardDidShow', event => {
@@ -89,10 +77,6 @@ export default function CreateOwnerScreen() {
       hideSubscription.remove();
     };
   }, []);
-
-  // =====================================================
-  // LOAD OWNER FOR EDIT MODE
-  // =====================================================
 
   useEffect(() => {
     if (!ownerId || !token) {
@@ -144,10 +128,6 @@ export default function CreateOwnerScreen() {
     loadOwner();
   }, [ownerId, token]);
 
-  // =====================================================
-  // CLEAR SINGLE FIELD ERROR
-  // =====================================================
-
   const clearError = (
     field:
       | 'name'
@@ -165,10 +145,6 @@ export default function CreateOwnerScreen() {
     }));
   };
 
-  // =====================================================
-  // RESET ALL ERRORS
-  // =====================================================
-
   const resetErrors = () => {
     setErrors({
       name: false,
@@ -181,10 +157,6 @@ export default function CreateOwnerScreen() {
       address: false,
     });
   };
-
-  // =====================================================
-  // SHOW REQUIRED FIELD ERROR
-  // =====================================================
 
   const showRequiredError = (
     field:
@@ -212,20 +184,8 @@ export default function CreateOwnerScreen() {
     });
   };
 
-  // =====================================================
-  // CREATE / UPDATE OWNER
-  // =====================================================
-
   const handleCreateOwner = async () => {
-    // -----------------------------------------------
-    // CLEAR OLD ERRORS
-    // -----------------------------------------------
-
     resetErrors();
-
-    // -----------------------------------------------
-    // OWNER NAME
-    // -----------------------------------------------
 
     if (!name.trim()) {
       showRequiredError(
@@ -236,10 +196,6 @@ export default function CreateOwnerScreen() {
       return;
     }
 
-    // -----------------------------------------------
-    // MOBILE NUMBER
-    // -----------------------------------------------
-
     if (!mobileNumber.trim()) {
       showRequiredError(
         'mobileNumber',
@@ -248,10 +204,6 @@ export default function CreateOwnerScreen() {
       );
       return;
     }
-
-    // -----------------------------------------------
-    // MOBILE NUMBER FORMAT
-    // -----------------------------------------------
 
     if (!/^\d{10}$/.test(mobileNumber.trim())) {
       setErrors(prev => ({
@@ -269,10 +221,6 @@ export default function CreateOwnerScreen() {
       return;
     }
 
-    // -----------------------------------------------
-    // MAX RESTAURANTS
-    // -----------------------------------------------
-
     if (!maxRestaurants.trim()) {
       showRequiredError(
         'maxRestaurants',
@@ -281,10 +229,6 @@ export default function CreateOwnerScreen() {
       );
       return;
     }
-
-    // -----------------------------------------------
-    // MAX STAFF
-    // -----------------------------------------------
 
     if (!maxStaff.trim()) {
       showRequiredError(
@@ -295,10 +239,6 @@ export default function CreateOwnerScreen() {
       return;
     }
 
-    // -----------------------------------------------
-    // MAX TABLES
-    // -----------------------------------------------
-
     if (!maxTables.trim()) {
       showRequiredError(
         'maxTables',
@@ -307,10 +247,6 @@ export default function CreateOwnerScreen() {
       );
       return;
     }
-
-    // -----------------------------------------------
-    // RESTAURANT NAME
-    // -----------------------------------------------
 
     if (!restaurantName.trim()) {
       showRequiredError(
@@ -321,27 +257,15 @@ export default function CreateOwnerScreen() {
       return;
     }
 
-    // -----------------------------------------------
-    // CITY
-    // -----------------------------------------------
-
     if (!city.trim()) {
       showRequiredError('city', 'City Required', 'Please enter city.');
       return;
     }
 
-    // -----------------------------------------------
-    // ADDRESS
-    // -----------------------------------------------
-
     if (!address.trim()) {
       showRequiredError('address', 'Address Required', 'Please enter address.');
       return;
     }
-
-    // =================================================
-    // OWNER DATA
-    // =================================================
 
     const ownerData = {
       name: name.trim(),
@@ -361,33 +285,16 @@ export default function CreateOwnerScreen() {
       address: address.trim(),
     };
 
-    // =================================================
-    // API REQUEST
-    // =================================================
-
     try {
       setLoading(true);
 
       let response;
 
-      // ---------------------------------------------
-      // UPDATE OWNER
-      // ---------------------------------------------
-
       if (ownerId) {
         response = await editOwner(Number(ownerId), ownerData, token ?? '');
-      }
-
-      // ---------------------------------------------
-      // CREATE OWNER
-      // ---------------------------------------------
-      else {
+      } else {
         response = await createOwner(ownerData, token ?? '');
       }
-
-      // =================================================
-      // SUCCESS
-      // =================================================
 
       if (response.success) {
         Toast.show({
@@ -409,10 +316,6 @@ export default function CreateOwnerScreen() {
         return;
       }
 
-      // =================================================
-      // SUCCESS FALSE
-      // =================================================
-
       Toast.show({
         type: 'error',
 
@@ -425,10 +328,6 @@ export default function CreateOwnerScreen() {
         visibilityTime: 4000,
       });
     } catch (error: unknown) {
-      // =================================================
-      // API ERROR
-      // =================================================
-
       if (error instanceof ApiError) {
         Toast.show({
           type: 'error',
@@ -442,10 +341,6 @@ export default function CreateOwnerScreen() {
 
         return;
       }
-
-      // =================================================
-      // NORMAL ERROR
-      // =================================================
 
       if (error instanceof Error) {
         Toast.show({
@@ -461,10 +356,6 @@ export default function CreateOwnerScreen() {
         return;
       }
 
-      // =================================================
-      // UNKNOWN ERROR
-      // =================================================
-
       Toast.show({
         type: 'error',
 
@@ -479,19 +370,11 @@ export default function CreateOwnerScreen() {
     }
   };
 
-  // =====================================================
-  // RETURN UI
-  // =====================================================
-
   return (
     <SafeAreaView
       edges={['top', 'left', 'right', 'bottom']}
       className='flex-1 bg-white'
     >
-      {/* =================================================
-          HEADER
-          ================================================= */}
-
       <View className='flex-row items-center border-b border-[#F0EDF2] bg-white px-5 py-4'>
         <TouchableOpacity
           activeOpacity={0.7}
@@ -512,10 +395,6 @@ export default function CreateOwnerScreen() {
         </View>
       </View>
 
-      {/* =================================================
-          FORM
-          ================================================= */}
-
       <ScrollView
         className='flex-1'
         showsVerticalScrollIndicator={false}
@@ -526,19 +405,11 @@ export default function CreateOwnerScreen() {
           paddingBottom: 30,
         }}
       >
-        {/* =================================================
-            OWNER DETAILS
-            ================================================= */}
-
         <Text className='mb-3 text-[15px] font-bold text-[#442F52]'>
           Owner Details
         </Text>
 
         <View className='rounded-2xl bg-white p-4'>
-          {/* =================================================
-              OWNER NAME
-              ================================================= */}
-
           <View className='mb-4'>
             <Text className='mb-2 text-[13px] font-semibold text-[#442F52]'>
               Owner Name
@@ -578,10 +449,6 @@ export default function CreateOwnerScreen() {
               </Text>
             )}
           </View>
-
-          {/* =================================================
-              MOBILE NUMBER
-              ================================================= */}
 
           <View className='mb-1'>
             <Text className='mb-2 text-[13px] font-semibold text-[#442F52]'>
@@ -625,19 +492,11 @@ export default function CreateOwnerScreen() {
           </View>
         </View>
 
-        {/* =================================================
-            RESTAURANT DETAILS
-            ================================================= */}
-
         <Text className='mb-3 mt-6 text-[15px] font-bold text-[#442F52]'>
           Restaurant Details
         </Text>
 
         <View className='rounded-2xl bg-white p-4'>
-          {/* =================================================
-              RESTAURANT NAME
-              ================================================= */}
-
           <View className='mb-4'>
             <Text className='mb-2 text-[13px] font-semibold text-[#442F52]'>
               Restaurant Name
@@ -678,10 +537,6 @@ export default function CreateOwnerScreen() {
             )}
           </View>
 
-          {/* =================================================
-              CITY
-              ================================================= */}
-
           <View className='mb-4'>
             <Text className='mb-2 text-[13px] font-semibold text-[#442F52]'>
               City
@@ -721,10 +576,6 @@ export default function CreateOwnerScreen() {
               </Text>
             )}
           </View>
-
-          {/* =================================================
-              ADDRESS
-              ================================================= */}
 
           <View className='mb-1'>
             <Text className='mb-2 text-[13px] font-semibold text-[#442F52]'>
@@ -771,19 +622,11 @@ export default function CreateOwnerScreen() {
           </View>
         </View>
 
-        {/* =================================================
-            ACCOUNT LIMITS
-            ================================================= */}
-
         <Text className='mb-3 mt-6 text-[15px] font-bold text-[#442F52]'>
           Account Limits
         </Text>
 
         <View className='rounded-2xl bg-white p-4'>
-          {/* =================================================
-              MAX RESTAURANTS
-              ================================================= */}
-
           <View className='mb-4'>
             <Text className='mb-2 text-[13px] font-semibold text-[#442F52]'>
               Maximum Restaurants
@@ -824,10 +667,6 @@ export default function CreateOwnerScreen() {
             )}
           </View>
 
-          {/* =================================================
-              MAX STAFF
-              ================================================= */}
-
           <View className='mb-4'>
             <Text className='mb-2 text-[13px] font-semibold text-[#442F52]'>
               Maximum Staff
@@ -867,10 +706,6 @@ export default function CreateOwnerScreen() {
               </Text>
             )}
           </View>
-
-          {/* =================================================
-              MAX TABLES
-              ================================================= */}
 
           <View className='mb-1'>
             <Text className='mb-2 text-[13px] font-semibold text-[#442F52]'>
@@ -915,10 +750,6 @@ export default function CreateOwnerScreen() {
         </View>
       </ScrollView>
 
-      {/* =================================================
-          FOOTER
-          ================================================= */}
-
       <View
         style={{
           marginBottom: keyboardHeight,
@@ -926,10 +757,6 @@ export default function CreateOwnerScreen() {
         className='bg-white px-5 pb-5 pt-3'
       >
         <View className='flex-row gap-3'>
-          {/* =================================================
-              CANCEL
-              ================================================= */}
-
           <TouchableOpacity
             activeOpacity={0.7}
             onPress={() => router.back()}
@@ -940,10 +767,6 @@ export default function CreateOwnerScreen() {
               Cancel
             </Text>
           </TouchableOpacity>
-
-          {/* =================================================
-              CREATE / UPDATE
-              ================================================= */}
 
           <TouchableOpacity
             activeOpacity={0.8}

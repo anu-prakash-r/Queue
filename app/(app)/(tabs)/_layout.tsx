@@ -4,7 +4,8 @@ import { Pressable, Text, View, StyleSheet } from 'react-native';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { HomeSvg, Table, Queue, Profile } from '@/assets/Svg/NavBar';
+import { HomeSvg, Table, Queue, Profile, Manage } from '@/assets/Svg/NavBar';
+import { useAuth } from '@/contexts/AuthContext';
 
 const PURPLE = '#442F52';
 const INACTIVE = '#AAAAAA';
@@ -14,6 +15,20 @@ const SIDE_GAP = 18;
 
 function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
+
+  const { isSuperAdmin } = useAuth();
+
+  const visibleRoutes = state.routes.filter(route => {
+    if (route.name === 'profile') {
+      return isSuperAdmin;
+    }
+
+    if (route.name === 'manage') {
+      return !isSuperAdmin;
+    }
+
+    return true;
+  });
 
   return (
     <View
@@ -28,10 +43,12 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
     >
       <View style={styles.tabBarWrapper}>
         <View style={styles.tabBar}>
-          {state.routes.map((route, index) => {
+          {visibleRoutes.map(route => {
             const { options } = descriptors[route.key];
 
-            const isFocused = state.index === index;
+            const stateIndex = state.routes.findIndex(r => r.key === route.key);
+
+            const isFocused = state.index === stateIndex;
 
             const label =
               options.tabBarLabel !== undefined
@@ -69,6 +86,10 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
 
               if (route.name === 'profile') {
                 return <Profile width={24} height={24} color={color} />;
+              }
+
+              if (route.name === 'manage') {
+                return <Manage width={26} height={26} color={color} />;
               }
 
               return null;
@@ -111,6 +132,8 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
 }
 
 export default function TabLayout() {
+  const { isSuperAdmin } = useAuth();
+
   return (
     <Tabs
       tabBar={props => <CustomTabBar {...props} />}
@@ -139,12 +162,37 @@ export default function TabLayout() {
         }}
       />
 
-      <Tabs.Screen
-        name='profile'
-        options={{
-          title: 'Profile',
-        }}
-      />
+      {isSuperAdmin ? (
+        <Tabs.Screen
+          name='profile'
+          options={{
+            title: 'Profile',
+          }}
+        />
+      ) : (
+        <Tabs.Screen
+          name='profile'
+          options={{
+            href: null,
+          }}
+        />
+      )}
+
+      {isSuperAdmin ? (
+        <Tabs.Screen
+          name='manage'
+          options={{
+            href: null,
+          }}
+        />
+      ) : (
+        <Tabs.Screen
+          name='manage'
+          options={{
+            title: 'Manage',
+          }}
+        />
+      )}
     </Tabs>
   );
 }

@@ -44,15 +44,12 @@ export default function ConfirmationModal({
       onRequestClose={onCancel}
     >
       <View className='flex-1 items-center justify-center px-6'>
-        {/* Background Overlay */}
         <Pressable
           onPress={onCancel}
           className='absolute inset-0 bg-black/40'
         />
 
-        {/* Modal */}
         <View className='w-full max-w-[380px] rounded-3xl bg-white p-5'>
-          {/* Icon */}
           <View className='items-center'>
             <View
               className={`h-16 w-16 items-center justify-center rounded-full ${
@@ -67,19 +64,15 @@ export default function ConfirmationModal({
             </View>
           </View>
 
-          {/* Title */}
           <Text className='mt-4 text-center text-[18px] font-bold text-[#442F52]'>
             {title}
           </Text>
 
-          {/* Message */}
           <Text className='mt-2 text-center text-[13px] leading-5 text-[#777180]'>
             {message}
           </Text>
 
-          {/* Buttons */}
           <View className='mt-6 flex-row gap-3'>
-            {/* Cancel */}
             <TouchableOpacity
               activeOpacity={0.7}
               disabled={loading}
@@ -91,7 +84,6 @@ export default function ConfirmationModal({
               </Text>
             </TouchableOpacity>
 
-            {/* Confirm */}
             <TouchableOpacity
               activeOpacity={0.8}
               disabled={loading}

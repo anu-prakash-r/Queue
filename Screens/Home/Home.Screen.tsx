@@ -10,9 +10,12 @@ import { router, useNavigation } from 'expo-router';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
 
 import { HomeQueueSvg } from '@/assets/Svg';
+import { useUserProfile } from '@/hooks/useUserProfile';
 
 export default function HomeScreen() {
   const navigation = useNavigation<DrawerNavigationProp<any>>();
+
+  const { name, restaurant } = useUserProfile();
 
   const handleMenuPress = () => {
     navigation.openDrawer();
@@ -21,8 +24,8 @@ export default function HomeScreen() {
   return (
     <SafeAreaView edges={['top', 'left', 'right']} className='flex-1 bg-white'>
       <AppHeader
-        name='Anu'
-        restaurantName='Dark Restaurant'
+        name={name}
+        restaurantName={restaurant}
         onMenuPress={handleMenuPress}
         onNotificationPress={() => router.push('/notification')}
       />
@@ -42,6 +45,9 @@ export default function HomeScreen() {
         <TodaysQueue
           onCallPress={item => {
             console.log('Calling:', item.name);
+          }}
+          onAddCustomer={() => {
+            router.push('/addqueue');
           }}
         />
       </ScrollView>

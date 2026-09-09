@@ -1,7 +1,7 @@
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import React, { useState } from 'react';
 import {
-  Alert,
+  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -13,8 +13,8 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Toast from 'react-native-toast-message';
 import { useAuth } from '@/contexts/AuthContext';
-
 import { adminLogin } from '@/services/authApi';
 import { SarasSvg } from '@/assets/Svg';
 
@@ -22,40 +22,100 @@ export default function SuperAdminLoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+
   const { setToken } = useAuth();
 
+  const showToast = (
+    type: 'success' | 'error' | 'info',
+    text1: string,
+    text2?: string,
+  ) => {
+    Toast.show({
+      type,
+      text1,
+      text2,
+      position: 'top',
+      visibilityTime: 3000,
+      autoHide: true,
+      topOffset: 50,
+    });
+  };
+
   const handleLogin = async () => {
-    if (!email.trim()) {
-      Alert.alert('Email Required', 'Please enter your email address.');
+    if (isLoggingIn) {
+      return;
+    }
+
+    const trimmedEmail = email.trim();
+
+    if (!trimmedEmail) {
+      showToast('error', 'Email Required', 'Please enter your email address.');
       return;
     }
 
     if (!password.trim()) {
-      Alert.alert('Password Required', 'Please enter your password.');
+      showToast('error', 'Password Required', 'Please enter your password.');
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailRegex.test(trimmedEmail)) {
+      showToast(
+        'error',
+        'Invalid Email',
+        'Please enter a valid email address.',
+      );
       return;
     }
 
     try {
-      const response = await adminLogin({ email, password });
+      setIsLoggingIn(true);
+
+      const response = await adminLogin({
+        email: trimmedEmail,
+        password,
+      });
+
       if (response.success) {
         const token = response?.data?.token;
+
         if (token) {
           await setToken(token);
+
+          showToast('success', 'Login Successful', 'Welcome, Super Admin!');
+
+          setTimeout(() => {
+            router.replace('/home');
+          }, 500);
         } else {
-          console.warn('Login succeeded but token missing in response');
+          showToast(
+            'error',
+
+            'Login succeeded but authentication token is missing.',
+          );
         }
-        router.replace('/home');
       } else {
-        Alert.alert('Login Failed', response.message || 'Invalid credentials');
+        showToast(
+          'error',
+          'Login Failed',
+          response.message || 'Invalid email or password.',
+        );
       }
     } catch (error) {
-      const msg = error instanceof Error ? error.message : 'Login error';
-      Alert.alert('Error', msg);
+      showToast('error', 'You are not a Super Admin');
+    } finally {
+      setIsLoggingIn(false);
     }
   };
 
   const handleForgotPassword = () => {
-    console.log('Forgot password:', email);
+    showToast(
+      'info',
+      'Forgot Password',
+      'Password reset functionality will be available soon.',
+    );
   };
 
   return (
@@ -111,6 +171,7 @@ export default function SuperAdminLoginScreen() {
                   keyboardType='email-address'
                   autoCapitalize='none'
                   autoCorrect={false}
+                  editable={!isLoggingIn}
                   value={email}
                   onChangeText={setEmail}
                 />
@@ -130,12 +191,14 @@ export default function SuperAdminLoginScreen() {
                   secureTextEntry={!showPassword}
                   autoCapitalize='none'
                   autoCorrect={false}
+                  editable={!isLoggingIn}
                   value={password}
                   onChangeText={setPassword}
                 />
 
                 <TouchableOpacity
                   activeOpacity={0.7}
+                  disabled={isLoggingIn}
                   onPress={() => setShowPassword(prev => !prev)}
                 >
                   <MaterialIcons
@@ -146,26 +209,40 @@ export default function SuperAdminLoginScreen() {
                 </TouchableOpacity>
               </View>
 
-              {/* <TouchableOpacity
+              <TouchableOpacity
                 activeOpacity={0.7}
+                disabled={isLoggingIn}
                 onPress={handleForgotPassword}
-                className='mt-4 items-end'
+                className='mt-3 items-end'
               >
                 <Text className='text-[14px] font-semibold text-[#6C2BD9]'>
                   Forgot Password?
                 </Text>
-              </TouchableOpacity> */}
+              </TouchableOpacity>
 
               <TouchableOpacity
                 activeOpacity={0.8}
                 onPress={handleLogin}
+                disabled={isLoggingIn}
                 className='mt-6 h-[48px] flex-row items-center justify-center rounded-2xl bg-[#6C2BD9]'
               >
-                <MaterialIcons name='login' size={22} color='#FFFFFF' />
+                {isLoggingIn ? (
+                  <>
+                    <ActivityIndicator size='small' color='#FFFFFF' />
 
-                <Text className='ml-2 text-[16px] font-bold tracking-wide text-white'>
-                  LOGIN AS SUPER ADMIN
-                </Text>
+                    <Text className='ml-2 text-[16px] font-bold tracking-wide text-white'>
+                      LOGGING IN...
+                    </Text>
+                  </>
+                ) : (
+                  <>
+                    <MaterialIcons name='login' size={22} color='#FFFFFF' />
+
+                    <Text className='ml-2 text-[16px] font-bold tracking-wide text-white'>
+                      LOGIN AS SUPER ADMIN
+                    </Text>
+                  </>
+                )}
               </TouchableOpacity>
             </View>
 
@@ -178,17 +255,6 @@ export default function SuperAdminLoginScreen() {
                 Secure administrator access
               </Text>
             </View>
-
-            {/* <TouchableOpacity
-              activeOpacity={0.7}
-              onPress={() => router.replace('/login')}
-              className='mt-5 mb-10 items-center'
-            >
-              <Text className='text-[14px] text-[#777180]'>
-                Are you a waiter?{' '}
-                <Text className='font-bold text-[#351467]'>Login here</Text>
-              </Text>
-            </TouchableOpacity> */}
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
