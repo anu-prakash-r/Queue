@@ -11,18 +11,18 @@ import {
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
-import { ApiError } from '@/services/api';
 import {
-  deleteRestaurant,
-  getRestaurantDetails,
-  getRestaurants,
+  useGetRestaurantsQuery,
+  useLazyGetRestaurantDetailsQuery,
+  useSwitchRestaurantStatusMutation,
+  useDeleteRestaurantMutation,
   RestaurantDetails,
   RestaurantItem,
-  switchRestaurantStatus,
-} from '@/services/restaurantApi';
+} from '@/store/api/restaurantApi';
 import { useAuth } from '@/contexts/AuthContext';
 import ConfirmationModal from '@/components/ConfirmationModal/ConfirmationModal';
 import Toast from 'react-native-toast-message';
+import { RestaurantTabSkeleton } from '../SkeletonLoader/RestaurantSkeleton';
 
 type RestaurantTabProps = {
   width: number;
@@ -35,10 +35,13 @@ const TEXT_GRAY = '#6F6875';
 export default function RestaurantTab({ width }: RestaurantTabProps) {
   const { token } = useAuth();
 
-  const [restaurants, setRestaurants] = useState<RestaurantItem[]>([]);
+  const {
+    data: restaurants = [],
+    isLoading: loading,
+    error,
+    refetch,
+  } = useGetRestaurantsQuery(undefined, { skip: !token });
 
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
   const [expandedId, setExpandedId] = useState<number | string | null>(null);
@@ -56,44 +59,24 @@ export default function RestaurantTab({ width }: RestaurantTabProps) {
   const [detailsLoading, setDetailsLoading] = useState(false);
   const [detailsError, setDetailsError] = useState<string | null>(null);
 
-  const fetchRestaurants = useCallback(async () => {
-    try {
-      setError(null);
+  const [triggerRestaurantDetails] = useLazyGetRestaurantDetailsQuery();
+  const [switchRestaurantStatus] = useSwitchRestaurantStatusMutation();
+  const [deleteRestaurant] = useDeleteRestaurantMutation();
 
-      if (!token) {
-        setLoading(false);
-        return;
-      }
-
-      const items = await getRestaurants(token);
-
-      setRestaurants(Array.isArray(items) ? items : []);
-    } catch (err: unknown) {
-      let msg = 'Network error while fetching restaurants.';
-
-      if (err instanceof ApiError) {
-        msg = err.message;
-      } else if (err instanceof Error) {
-        msg = err.message;
-      }
-
-      setError(msg);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, [token]);
+  const errorText = error ? 'Unable to load. Please try again.' : null;
 
   useFocusEffect(
     useCallback(() => {
-      fetchRestaurants();
-    }, [fetchRestaurants]),
+      if (token) {
+        refetch();
+      }
+    }, [token, refetch]),
   );
 
   const handleRefresh = useCallback(() => {
     setRefreshing(true);
-    fetchRestaurants();
-  }, [fetchRestaurants]);
+    refetch().finally(() => setRefreshing(false));
+  }, [refetch]);
 
   const toggleExpanded = (id: number | string) => {
     setExpandedId(current => (current === id ? null : id));
@@ -116,20 +99,12 @@ export default function RestaurantTab({ width }: RestaurantTabProps) {
     try {
       setSwitchLoadingId(restaurantId);
 
-      const response = await switchRestaurantStatus(restaurantId, token);
+      const response = await switchRestaurantStatus(restaurantId).unwrap();
 
       const failed = Boolean(response && response.success === false);
 
       if (!failed) {
-        setRestaurants(prev =>
-          Array.isArray(prev)
-            ? prev.map(item =>
-                item.id === restaurantId
-                  ? { ...item, is_active: !item.is_active }
-                  : item,
-              )
-            : [],
-        );
+        refetch();
 
         Toast.show({
           type: 'success',
@@ -152,9 +127,7 @@ export default function RestaurantTab({ width }: RestaurantTabProps) {
     } catch (error: unknown) {
       let message = 'Network error while updating the status.';
 
-      if (error instanceof ApiError) {
-        message = error.message;
-      } else if (error instanceof Error) {
+      if (error instanceof Error) {
         message = error.message;
       }
 
@@ -180,15 +153,13 @@ export default function RestaurantTab({ width }: RestaurantTabProps) {
       setDetails(null);
       setDetailsVisible(true);
 
-      const detail = await getRestaurantDetails(restaurantId, token);
+      const detail = await triggerRestaurantDetails(restaurantId).unwrap();
 
       setDetails(detail);
     } catch (error: unknown) {
       let message = 'Network error while fetching restaurant details.';
 
-      if (error instanceof ApiError) {
-        message = error.message;
-      } else if (error instanceof Error) {
+      if (error instanceof Error) {
         message = error.message;
       }
 
@@ -218,16 +189,12 @@ export default function RestaurantTab({ width }: RestaurantTabProps) {
     try {
       setDeleteLoading(true);
 
-      const response = await deleteRestaurant(String(restaurantId), token);
+      const response = await deleteRestaurant(String(restaurantId)).unwrap();
 
       const failed = Boolean(response && response.success === false);
 
       if (!failed) {
-        setRestaurants(prev =>
-          Array.isArray(prev)
-            ? prev.filter(item => item.id !== restaurantId)
-            : [],
-        );
+        refetch();
 
         setExpandedId(null);
 
@@ -252,9 +219,7 @@ export default function RestaurantTab({ width }: RestaurantTabProps) {
     } catch (error: unknown) {
       let message = 'Network error while deleting the restaurant.';
 
-      if (error instanceof ApiError) {
-        message = error.message;
-      } else if (error instanceof Error) {
+      if (error instanceof Error) {
         message = error.message;
       }
 
@@ -473,16 +438,8 @@ export default function RestaurantTab({ width }: RestaurantTabProps) {
         </View>
       </View>
       {loading ? (
-        <View className='flex-1 items-center justify-center'>
-          <View className='h-14 w-14 items-center justify-center rounded-2xl bg-[#F4F0FF]'>
-            <ActivityIndicator size='small' color={PURPLE} />
-          </View>
-
-          <Text className='mt-3 text-sm text-[#7B747F]'>
-            Loading restaurants...
-          </Text>
-        </View>
-      ) : error ? (
+        <RestaurantTabSkeleton />
+      ) : errorText ? (
         <View className='flex-1 items-center justify-center px-8'>
           <View className='h-16 w-16 items-center justify-center rounded-full bg-[#FFF4F4]'>
             <MaterialCommunityIcons
@@ -497,11 +454,11 @@ export default function RestaurantTab({ width }: RestaurantTabProps) {
           </Text>
 
           <Text className='mt-2 text-center text-sm leading-5 text-[#7B747F]'>
-            {error}
+            {errorText}
           </Text>
 
           <TouchableOpacity
-            onPress={fetchRestaurants}
+            onPress={() => refetch()}
             activeOpacity={0.8}
             className='mt-4 flex-row items-center rounded-xl bg-[#4d13af] px-5 py-3'
           >
@@ -629,7 +586,6 @@ export default function RestaurantTab({ width }: RestaurantTabProps) {
                 </Text>
               </View>
             ) : detailsError ? (
-              /* Error */
               <View className='items-center justify-center px-8 py-14'>
                 <View className='h-16 w-16 items-center justify-center rounded-full bg-[#FFF1F2]'>
                   <MaterialCommunityIcons

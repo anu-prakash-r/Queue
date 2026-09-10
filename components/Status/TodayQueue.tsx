@@ -1,10 +1,14 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { ActivityIndicator, Text, TouchableOpacity, View } from 'react-native';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { router, useFocusEffect } from 'expo-router';
 
 import { useAuth } from '@/contexts/AuthContext';
-import { getQueues, QueueItem as QueueApiItem } from '@/services/queueApi';
+import {
+  useGetQueuesQuery,
+  QueueItem as QueueApiItem,
+} from '@/store/api/queueApi';
+import TodaysQueueSkeleton from '../SkeletonLoader/TodaysQueueSkeleton';
 
 type QueueItem = {
   id: string | number;
@@ -12,6 +16,7 @@ type QueueItem = {
   people: number;
   time: string;
   waitingTime: string;
+  mobileNumber?: string;
 };
 
 type TodaysQueueProps = {
@@ -73,6 +78,7 @@ function mapQueueItem(item: QueueApiItem): QueueItem {
     people: item.people ?? item.party_size ?? item.guests ?? 1,
     time: formatTime(item.created_at),
     waitingTime: formatWaitingTime(item),
+    mobileNumber: item.mobile_number ?? item.customer?.mobile_number,
   };
 }
 
@@ -82,43 +88,31 @@ export default function TodaysQueue({
 }: TodaysQueueProps) {
   const { token } = useAuth();
 
-  const [items, setItems] = useState<QueueItem[]>([]);
+  const {
+    data: queueItems = [],
+    isLoading: loading,
+    error,
+    refetch: refetchQueues,
+  } = useGetQueuesQuery('waiting', { skip: !token });
 
-  const [loading, setLoading] = useState(true);
+  const items: QueueItem[] = useMemo(
+    () => queueItems.slice(0, MAX_ITEMS).map(mapQueueItem),
+    [queueItems],
+  );
 
-  const [error, setError] = useState('');
-
-  const loadQueue = useCallback(async () => {
-    if (!token) {
-      setLoading(false);
-
-      setError('');
-
-      setItems([]);
-
-      return;
-    }
-
-    setLoading(true);
-
-    setError('');
-
-    try {
-      const queueItems = await getQueues(token, 'waiting');
-
-      setItems(queueItems.slice(0, MAX_ITEMS).map(mapQueueItem));
-    } catch {
-      setError('Could not load the queue.');
-    } finally {
-      setLoading(false);
-    }
-  }, [token]);
+  const err = error ? 'Could not load the queue.' : '';
 
   useFocusEffect(
     useCallback(() => {
-      loadQueue();
-    }, [loadQueue]),
+      if (token) {
+        refetchQueues();
+      }
+    }, [token, refetchQueues]),
   );
+
+  if (loading) {
+    return <TodaysQueueSkeleton />;
+  }
 
   return (
     <View className='mt-6 px-5'>
@@ -141,18 +135,14 @@ export default function TodaysQueue({
           </TouchableOpacity>
         </View>
 
-        {loading ? (
+        {err ? (
           <View className='items-center justify-center py-8'>
-            <ActivityIndicator size='small' color='#4B197C' />
-          </View>
-        ) : error ? (
-          <View className='items-center justify-center py-8'>
-            <Text className='text-[13px] text-[#4B4552]'>{error}</Text>
+            <Text className='text-[13px] text-[#4B4552]'>{err}</Text>
 
             <TouchableOpacity
               className='mt-3 rounded-xl bg-[#4B197C] px-5 py-2'
               activeOpacity={0.8}
-              onPress={loadQueue}
+              onPress={() => refetchQueues()}
             >
               <Text className='text-[13px] font-bold text-white'>RETRY</Text>
             </TouchableOpacity>
@@ -215,8 +205,9 @@ export default function TodaysQueue({
               </View>
 
               <TouchableOpacity
-                className='h-[34px] w-[80px] flex-row items-center justify-center rounded-xl bg-[#4B197C]'
+                className='h-[34px] w-[80px] flex-row items-center justify-center rounded-xl bg-[#4B197C] opacity-100 disabled:opacity-40'
                 activeOpacity={0.8}
+                disabled={!item.mobileNumber}
                 onPress={() => onCallPress?.(item)}
               >
                 <MaterialIcons name='phone' size={20} color='#FFFFFF' />

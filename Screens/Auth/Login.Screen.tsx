@@ -25,7 +25,10 @@ import CountryPicker, {
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 
 import { OnboardSvg, SarasSvg } from '@/assets/Svg';
-import { sendOtp, verifyOtp } from '@/services/authApi';
+import {
+  useSendOtpMutation,
+  useVerifyOtpMutation,
+} from '@/store/api/authApi';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function LoginScreen() {
@@ -38,6 +41,9 @@ export default function LoginScreen() {
   const cameFromRegister = params.from === 'register';
 
   const { token, setToken, isSuperAdmin } = useAuth();
+
+  const [sendOtp, { isLoading: isSendingOtp }] = useSendOtpMutation();
+  const [verifyOtp, { isLoading: isVerifyingOtp }] = useVerifyOtpMutation();
 
   const [step, setStep] = useState<1 | 2>(params.step === '2' ? 2 : 1);
 
@@ -55,8 +61,6 @@ export default function LoginScreen() {
   const [callingCode, setCallingCode] = useState('91');
 
   const [countryPickerVisible, setCountryPickerVisible] = useState(false);
-
-  const [isSendingOtp, setIsSendingOtp] = useState(false);
 
   const otpInputs = useRef<TextInput[]>([]);
 
@@ -108,24 +112,20 @@ export default function LoginScreen() {
     }
 
     try {
-      setIsSendingOtp(true);
-
       await sendOtp({
         mobile_number: mobile,
-      });
+      }).unwrap();
 
       setOtp('');
       setTimer(60);
       setStep(2);
-    } catch (error) {
+    } catch (error: unknown) {
       const message =
         error instanceof Error
           ? error.message
           : 'Failed to send OTP. Please try again.';
 
       Alert.alert('Unable to send OTP', message);
-    } finally {
-      setIsSendingOtp(false);
     }
   };
 
@@ -193,7 +193,7 @@ export default function LoginScreen() {
       const response = await verifyOtp({
         mobile_number: mobile,
         otp,
-      });
+      }).unwrap();
 
       const token = response.data?.token ?? response.token;
 
@@ -203,7 +203,7 @@ export default function LoginScreen() {
       } else {
         Alert.alert('Verification Failed', response.message || 'Invalid OTP');
       }
-    } catch (error) {
+    } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : 'Verification error';
 
       Alert.alert('Error', msg);

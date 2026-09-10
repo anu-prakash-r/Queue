@@ -13,7 +13,7 @@ type AppHeaderProps = {
 };
 
 export default function AppHeader({
-  name = 'Anu',
+  name = 'Name',
   restaurantName = 'Dark Restaurant',
   onMenuPress,
   onNotificationPress,

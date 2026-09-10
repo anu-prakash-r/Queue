@@ -11,9 +11,7 @@ import {
 
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 
-import { TableItem, updateTableStatus } from '@/services/tableApi';
-
-import { useAuth } from '@/contexts/AuthContext';
+import { TableItem, useUpdateTableStatusMutation } from '@/store/api/tableApi';
 
 type TableStatus = 'available' | 'occupied' | 'reserved' | 'maintenance';
 
@@ -71,17 +69,12 @@ export default function TableStatusModal({
   onClose,
   onUpdated,
 }: Props) {
-  const { token } = useAuth();
+  const [updateTableStatus, { isLoading: loading }] =
+    useUpdateTableStatusMutation();
 
   const [selectedStatus, setSelectedStatus] =
     useState<TableStatus>('available');
 
-  const [loading, setLoading] = useState(false);
-
-  /**
-   * Set current table status
-   * when modal opens.
-   */
   useEffect(() => {
     if (!table) {
       return;
@@ -98,11 +91,6 @@ export default function TableStatusModal({
     }
   }, [table, visible]);
 
-  /**
-   * Select status.
-   *
-   * No API call here.
-   */
   const handleSelectStatus = (status: TableStatus) => {
     if (loading) {
       return;
@@ -111,9 +99,6 @@ export default function TableStatusModal({
     setSelectedStatus(status);
   };
 
-  /**
-   * Close modal.
-   */
   const handleCancel = () => {
     if (loading) {
       return;
@@ -122,69 +107,36 @@ export default function TableStatusModal({
     onClose();
   };
 
-  /**
-   * Update ONLY table status.
-   *
-   * PATCH /tables/{id}/status
-   */
   const handleUpdate = async () => {
-    if (!table || !token || loading) {
+    if (!table || loading) {
       return;
     }
 
     const currentStatus = String(table.status ?? 'available').toLowerCase();
 
-    /**
-     * If status has not changed,
-     * don't call API.
-     */
     if (currentStatus === selectedStatus) {
       onClose();
       return;
     }
 
     try {
-      setLoading(true);
-
-      /**
-       * ONLY status is sent.
-       *
-       * PATCH /tables/{id}/status
-       *
-       * Body:
-       * {
-       *   status: "occupied"
-       * }
-       */
-      const response = await updateTableStatus(
-        String(table.id),
-        selectedStatus,
-        token,
-      );
+      const response = await updateTableStatus({
+        id: String(table.id),
+        status: selectedStatus,
+      }).unwrap();
 
       if (response.success) {
-        /**
-         * Refresh tables list.
-         */
         onUpdated?.();
 
-        /**
-         * Close modal.
-         */
         onClose();
       } else {
         console.log('FAILED TO UPDATE TABLE STATUS:', response);
       }
     } catch (error) {
       console.log('UPDATE TABLE STATUS ERROR:', error);
-    } finally {
-      setLoading(false);
     }
   };
 
-  /**
-   * No table selected.
-   */
   if (!table) {
     return null;
   }

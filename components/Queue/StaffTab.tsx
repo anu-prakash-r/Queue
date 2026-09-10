@@ -14,22 +14,21 @@ import {
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
 
-import { ApiError } from '@/services/api';
-
 import {
-  deleteStaff,
-  getStaff,
-  getStaffDetails,
+  useGetStaffQuery,
+  useLazyGetStaffDetailsQuery,
+  useToggleStaffActiveMutation,
+  useDeleteStaffMutation,
   StaffDetails,
   StaffItem,
-  toggleStaffActive,
-} from '@/services/staffApi';
+} from '@/store/api/staffApi';
 
 import { useAuth } from '@/contexts/AuthContext';
 
 import ConfirmationModal from '@/components/ConfirmationModal/ConfirmationModal';
 
 import Toast from 'react-native-toast-message';
+import { StaffTabSkeleton } from '../SkeletonLoader/StaffSkeleton';
 
 type StaffTabProps = {
   width: number;
@@ -49,9 +48,14 @@ const ROLE_COLORS: Record<string, string> = {
 
 export default function StaffTab({ width }: StaffTabProps) {
   const { token } = useAuth();
-  const [staff, setStaff] = useState<StaffItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+
+  const {
+    data: staff = [],
+    isLoading: loading,
+    error,
+    refetch,
+  } = useGetStaffQuery(undefined, { skip: !token });
+
   const [refreshing, setRefreshing] = useState(false);
   const [expandedId, setExpandedId] = useState<number | string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<StaffItem | null>(null);
@@ -64,44 +68,24 @@ export default function StaffTab({ width }: StaffTabProps) {
   const [detailsLoading, setDetailsLoading] = useState(false);
   const [detailsError, setDetailsError] = useState<string | null>(null);
 
-  const fetchStaff = useCallback(async () => {
-    try {
-      setError(null);
+  const [triggerStaffDetails] = useLazyGetStaffDetailsQuery();
+  const [toggleStaffActive] = useToggleStaffActiveMutation();
+  const [deleteStaff] = useDeleteStaffMutation();
 
-      if (!token) {
-        setLoading(false);
-        return;
-      }
-
-      const items = await getStaff(token);
-
-      setStaff(Array.isArray(items) ? items : []);
-    } catch (err: unknown) {
-      let msg = 'Network error while fetching staff.';
-
-      if (err instanceof ApiError) {
-        msg = err.message;
-      } else if (err instanceof Error) {
-        msg = err.message;
-      }
-
-      setError(msg);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, [token]);
+  const errorText = error ? 'Unable to load. Please try again.' : null;
 
   useFocusEffect(
     useCallback(() => {
-      fetchStaff();
-    }, [fetchStaff]),
+      if (token) {
+        refetch();
+      }
+    }, [token, refetch]),
   );
 
   const handleRefresh = useCallback(() => {
     setRefreshing(true);
-    fetchStaff();
-  }, [fetchStaff]);
+    refetch().finally(() => setRefreshing(false));
+  }, [refetch]);
 
   const toggleExpanded = (id: number | string) => {
     setExpandedId(current => (current === id ? null : id));
@@ -137,15 +121,13 @@ export default function StaffTab({ width }: StaffTabProps) {
       setDetails(null);
       setDetailsVisible(true);
 
-      const detail = await getStaffDetails(staffId, token);
+      const detail = await triggerStaffDetails(staffId).unwrap();
 
       setDetails(detail);
     } catch (error: unknown) {
       let message = 'Network error while fetching staff details.';
 
-      if (error instanceof ApiError) {
-        message = error.message;
-      } else if (error instanceof Error) {
+      if (error instanceof Error) {
         message = error.message;
       }
 
@@ -175,23 +157,12 @@ export default function StaffTab({ width }: StaffTabProps) {
     try {
       setSwitchLoadingId(memberId);
 
-      const response = await toggleStaffActive(memberId, token);
+      const response = await toggleStaffActive(memberId).unwrap();
 
       const failed = Boolean(response && response.success === false);
 
       if (!failed) {
-        setStaff(prev =>
-          Array.isArray(prev)
-            ? prev.map(item =>
-                item.id === memberId
-                  ? {
-                      ...item,
-                      is_active: !item.is_active,
-                    }
-                  : item,
-              )
-            : [],
-        );
+        refetch();
 
         Toast.show({
           type: 'success',
@@ -214,9 +185,7 @@ export default function StaffTab({ width }: StaffTabProps) {
     } catch (error: unknown) {
       let message = 'Network error while updating the status.';
 
-      if (error instanceof ApiError) {
-        message = error.message;
-      } else if (error instanceof Error) {
+      if (error instanceof Error) {
         message = error.message;
       }
 
@@ -245,14 +214,12 @@ export default function StaffTab({ width }: StaffTabProps) {
     try {
       setDeleteLoading(true);
 
-      const response = await deleteStaff(String(staffId), token);
+      const response = await deleteStaff(String(staffId)).unwrap();
 
       const failed = Boolean(response && response.success === false);
 
       if (!failed) {
-        setStaff(prev =>
-          Array.isArray(prev) ? prev.filter(item => item.id !== staffId) : [],
-        );
+        refetch();
 
         setExpandedId(null);
         setDeleteTarget(null);
@@ -278,9 +245,7 @@ export default function StaffTab({ width }: StaffTabProps) {
     } catch (error: unknown) {
       let message = 'Network error while deleting staff.';
 
-      if (error instanceof ApiError) {
-        message = error.message;
-      } else if (error instanceof Error) {
+      if (error instanceof Error) {
         message = error.message;
       }
 
@@ -506,15 +471,8 @@ export default function StaffTab({ width }: StaffTabProps) {
       </View>
 
       {loading ? (
-        <View className='flex-1 items-center justify-center'>
-          <View className='h-16 w-16 items-center justify-center rounded-2xl bg-[#F4F0FF]'>
-            <ActivityIndicator size='small' color={PURPLE} />
-          </View>
-
-          <Text className='mt-4 text-sm text-[#7B747F]'>Loading staff...</Text>
-        </View>
-      ) : error ? (
-        /* ERROR */
+        <StaffTabSkeleton />
+      ) : errorText ? (
         <View className='flex-1 items-center justify-center px-8'>
           <View className='h-20 w-20 items-center justify-center rounded-full bg-[#FFF4F4]'>
             <MaterialCommunityIcons
@@ -529,11 +487,11 @@ export default function StaffTab({ width }: StaffTabProps) {
           </Text>
 
           <Text className='mt-2 text-center text-sm leading-5 text-[#7B747F]'>
-            {error}
+            {errorText}
           </Text>
 
           <TouchableOpacity
-            onPress={fetchStaff}
+            onPress={() => refetch()}
             activeOpacity={0.8}
             className='mt-5 flex-row items-center rounded-xl bg-[#4d13af] px-5 py-3'
           >
@@ -543,7 +501,6 @@ export default function StaffTab({ width }: StaffTabProps) {
           </TouchableOpacity>
         </View>
       ) : (
-        /* STAFF LIST */
         <FlatList
           className='flex-1'
           data={staff}
@@ -651,7 +608,6 @@ export default function StaffTab({ width }: StaffTabProps) {
                 </Text>
               </View>
             ) : detailsError ? (
-              /* Error */
               <View className='items-center justify-center px-8 py-14'>
                 <View className='h-16 w-16 items-center justify-center rounded-full bg-[#FFF4F4]'>
                   <MaterialCommunityIcons

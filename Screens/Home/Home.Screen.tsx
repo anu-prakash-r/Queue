@@ -1,5 +1,6 @@
-import { View, ScrollView } from 'react-native';
+import { View, ScrollView, Linking } from 'react-native';
 import React from 'react';
+import { StatusBar } from 'expo-status-bar';
 
 import AppHeader from '@/components/Header/Header';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -23,6 +24,7 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView edges={['top', 'left', 'right']} className='flex-1 bg-white'>
+      <StatusBar style='dark' />
       <AppHeader
         name={name}
         restaurantName={restaurant}
@@ -44,7 +46,9 @@ export default function HomeScreen() {
 
         <TodaysQueue
           onCallPress={item => {
-            console.log('Calling:', item.name);
+            if (item.mobileNumber) {
+              Linking.openURL(`https://wa.me/${item.mobileNumber}`);
+            }
           }}
           onAddCustomer={() => {
             router.push('/addqueue');

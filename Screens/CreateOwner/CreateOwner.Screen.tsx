@@ -19,11 +19,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import Toast from 'react-native-toast-message';
 
-import { ApiError } from '@/services/api';
-
 import { useAuth } from '@/contexts/AuthContext';
 
-import { createOwner, editOwner, getOwners } from '@/services/ownerApi';
+import {
+  useGetOwnersQuery,
+  useCreateOwnerMutation,
+  useEditOwnerMutation,
+} from '@/store/api/ownerApi';
 
 export default function CreateOwnerScreen() {
   const { token } = useAuth();
@@ -31,6 +33,11 @@ export default function CreateOwnerScreen() {
   const { ownerId } = useLocalSearchParams<{
     ownerId?: string;
   }>();
+
+  const { data: owners = [] } = useGetOwnersQuery(undefined, { skip: !token });
+
+  const [createOwner] = useCreateOwnerMutation();
+  const [editOwner] = useEditOwnerMutation();
 
   const [name, setName] = useState('');
 
@@ -83,50 +90,26 @@ export default function CreateOwnerScreen() {
       return;
     }
 
-    const loadOwner = async () => {
-      try {
-        const response = await getOwners(token);
+    const owner = owners.find(o => o.id === Number(ownerId));
 
-        if (response.success && response.data) {
-          const owner = response.data.find(o => o.id === Number(ownerId));
+    if (owner) {
+      setName(owner.name ?? '');
 
-          if (owner) {
-            setName(owner.name ?? '');
+      setMobileNumber(owner.mobile_number ?? '');
 
-            setMobileNumber(owner.mobile_number ?? '');
+      setMaxRestaurants(String(owner.max_restaurants ?? ''));
 
-            setMaxRestaurants(String(owner.max_restaurants ?? ''));
+      setMaxStaff(String(owner.max_staff ?? ''));
 
-            setMaxStaff(String(owner.max_staff ?? ''));
+      setMaxTables(String(owner.max_tables ?? ''));
 
-            setMaxTables(String(owner.max_tables ?? ''));
+      setRestaurantName(owner.restaurant_name ?? '');
 
-            setRestaurantName(owner.restaurant_name ?? '');
+      setCity(owner.city ?? '');
 
-            setCity(owner.city ?? '');
-
-            setAddress(owner.address ?? '');
-          }
-        }
-      } catch (error: unknown) {
-        const message =
-          error instanceof ApiError
-            ? error.message
-            : error instanceof Error
-              ? error.message
-              : 'Something went wrong while loading owner details.';
-
-        Toast.show({
-          type: 'error',
-          text1: 'Unable to Load Owner',
-          text2: message,
-          visibilityTime: 4000,
-        });
-      }
-    };
-
-    loadOwner();
-  }, [ownerId, token]);
+      setAddress(owner.address ?? '');
+    }
+  }, [ownerId, token, owners]);
 
   const clearError = (
     field:
@@ -291,9 +274,12 @@ export default function CreateOwnerScreen() {
       let response;
 
       if (ownerId) {
-        response = await editOwner(Number(ownerId), ownerData, token ?? '');
+        response = await editOwner({
+          ownerId: Number(ownerId),
+          payload: ownerData,
+        }).unwrap();
       } else {
-        response = await createOwner(ownerData, token ?? '');
+        response = await createOwner(ownerData).unwrap();
       }
 
       if (response.success) {
@@ -328,20 +314,6 @@ export default function CreateOwnerScreen() {
         visibilityTime: 4000,
       });
     } catch (error: unknown) {
-      if (error instanceof ApiError) {
-        Toast.show({
-          type: 'error',
-
-          text1: ownerId ? 'Update Failed' : 'Creation Failed',
-
-          text2: error.message || 'Request failed.',
-
-          visibilityTime: 5000,
-        });
-
-        return;
-      }
-
       if (error instanceof Error) {
         Toast.show({
           type: 'error',

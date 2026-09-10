@@ -1,5 +1,5 @@
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -15,16 +15,20 @@ import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 import { useAuth } from '@/contexts/AuthContext';
-import { adminLogin } from '@/services/authApi';
+import { useAdminLoginMutation } from '@/store/api/authApi';
 import { SarasSvg } from '@/assets/Svg';
 
 export default function SuperAdminLoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
-  const { setToken } = useAuth();
+  const { setToken, isSuperAdmin } = useAuth();
+
+  const isSuperAdminRef = useRef(isSuperAdmin);
+  isSuperAdminRef.current = isSuperAdmin;
+
+  const [adminLogin, { isLoading: isLoggingIn }] = useAdminLoginMutation();
 
   const showToast = (
     type: 'success' | 'error' | 'info',
@@ -40,6 +44,21 @@ export default function SuperAdminLoginScreen() {
       autoHide: true,
       topOffset: 50,
     });
+  };
+
+  const navigateToRoleLanding = async () => {
+    const deadline = Date.now() + 3000;
+
+    while (Date.now() < deadline) {
+      if (isSuperAdminRef.current) {
+        router.replace('/owners');
+        return;
+      }
+
+      await new Promise(resolve => setTimeout(resolve, 150));
+    }
+
+    router.replace('/home');
   };
 
   const handleLogin = async () => {
@@ -71,12 +90,10 @@ export default function SuperAdminLoginScreen() {
     }
 
     try {
-      setIsLoggingIn(true);
-
       const response = await adminLogin({
         email: trimmedEmail,
         password,
-      });
+      }).unwrap();
 
       if (response.success) {
         const token = response?.data?.token;
@@ -86,9 +103,7 @@ export default function SuperAdminLoginScreen() {
 
           showToast('success', 'Login Successful', 'Welcome, Super Admin!');
 
-          setTimeout(() => {
-            router.replace('/home');
-          }, 500);
+          await navigateToRoleLanding();
         } else {
           showToast(
             'error',
@@ -105,8 +120,6 @@ export default function SuperAdminLoginScreen() {
       }
     } catch (error) {
       showToast('error', 'You are not a Super Admin');
-    } finally {
-      setIsLoggingIn(false);
     }
   };
 

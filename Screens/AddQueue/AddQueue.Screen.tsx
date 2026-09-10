@@ -20,7 +20,7 @@ import Toast from 'react-native-toast-message';
 
 import { useAuth } from '@/contexts/AuthContext';
 
-import { createQueue } from '@/services/queueApi';
+import { useCreateQueueMutation } from '@/store/api/queueApi';
 
 export default function AddQueueScreen() {
   const { token } = useAuth();
@@ -35,7 +35,7 @@ export default function AddQueueScreen() {
 
   const [showValidation, setShowValidation] = useState(false);
 
-  const [loading, setLoading] = useState(false);
+  const [createQueue, { isLoading: loading }] = useCreateQueueMutation();
 
   const decreasePartySize = () => {
     setPartySize(previous => Math.max(1, previous - 1));
@@ -80,9 +80,7 @@ export default function AddQueueScreen() {
     };
 
     try {
-      setLoading(true);
-
-      const response = await createQueue(token, payload);
+      const response = await createQueue(payload).unwrap();
 
       if (response.success) {
         Toast.show({
@@ -129,8 +127,6 @@ export default function AddQueueScreen() {
         text1: message,
         visibilityTime: 4000,
       });
-    } finally {
-      setLoading(false);
     }
   };
 

@@ -22,16 +22,12 @@ import AddTableForm from '@/components/AddTable/AddTableForm';
 
 import AddTableHeader from '@/components/AddTable/AddTableHeader';
 
-import { useAuth } from '@/contexts/AuthContext';
+import { useCreateTableMutation } from '@/store/api/authApi';
 
-import { createTable } from '@/services/authApi';
-
-import { updateTable } from '@/services/tableApi';
+import { useUpdateTableMutation } from '@/store/api/tableApi';
 
 export default function AddTableScreen() {
   const formRef = useRef<AddTableFormRef>(null);
-
-  const { token } = useAuth();
 
   const params = useLocalSearchParams<{
     mode?: string;
@@ -43,10 +39,10 @@ export default function AddTableScreen() {
 
   const [loading, setLoading] = useState(false);
 
-  /**
-   * Load table data passed from
-   * the Tables screen.
-   */
+  const [createTable] = useCreateTableMutation();
+
+  const [updateTable] = useUpdateTableMutation();
+
   useEffect(() => {
     if (!isEditMode) {
       return;
@@ -104,10 +100,6 @@ export default function AddTableScreen() {
         isActive: table.is_active ?? true,
       };
 
-      /**
-       * Wait one frame so the ref
-       * is available.
-       */
       setTimeout(() => {
         formRef.current?.setFormData(formData);
       }, 0);
@@ -123,16 +115,6 @@ export default function AddTableScreen() {
   }, [isEditMode, params.table]);
 
   const handleSave = async () => {
-    if (!token) {
-      Toast.show({
-        type: 'error',
-        text1: 'Authentication token not found.',
-        visibilityTime: 4000,
-      });
-
-      return;
-    }
-
     const formData = formRef.current?.submitForm();
 
     if (!formData) {
@@ -163,11 +145,6 @@ export default function AddTableScreen() {
       Maintenance: 'maintenance',
     };
 
-    /**
-     * COMPLETE PAYLOAD
-     *
-     * All editable fields are sent.
-     */
     const payload = {
       table_number: formData.tableNumber.trim(),
 
@@ -193,11 +170,11 @@ export default function AddTableScreen() {
     try {
       setLoading(true);
 
-      /**
-       * EDIT
-       */
       if (isEditMode) {
-        const response = await updateTable(String(params.id), payload, token);
+        const response = await updateTable({
+          id: String(params.id),
+          payload,
+        }).unwrap();
 
         if (response.success) {
           Toast.show({
@@ -236,10 +213,7 @@ export default function AddTableScreen() {
         return;
       }
 
-      /**
-       * CREATE
-       */
-      const response = await createTable(payload, token);
+      const response = await createTable(payload).unwrap();
 
       if (response.success) {
         Toast.show({
