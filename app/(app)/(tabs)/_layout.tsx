@@ -1,10 +1,23 @@
 import { Tabs, usePathname, useRouter } from 'expo-router';
 import React, { useEffect } from 'react';
-import { Pressable, Text, View, StyleSheet } from 'react-native';
+import {
+  ActivityIndicator,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { HomeSvg, Table, Queue, Profile, Manage, Owners } from '@/assets/Svg/NavBar';
+import {
+  HomeSvg,
+  Table,
+  Queue,
+  Profile,
+  Manage,
+  Owners,
+} from '@/assets/Svg/NavBar';
 import { useAuth } from '@/contexts/AuthContext';
 
 const PURPLE = '#442F52';
@@ -15,33 +28,24 @@ const SIDE_GAP = 18;
 
 const ADMIN_TABS = ['owners', 'profile'];
 const OWNER_TABS = ['home', 'queue', 'tables', 'manage'];
+const STAFF_TABS = ['home', 'queue', 'tables'];
 const TAB_ROUTES = [...ADMIN_TABS, ...OWNER_TABS];
 
 function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
 
-  const { isSuperAdmin } = useAuth();
+  const { isSuperAdmin, isOwner } = useAuth();
 
   const visibleRoutes = state.routes.filter(route => {
-    const adminRoutes = ['owners', 'profile'];
-
-    if (route.name === 'owners') {
-      return isSuperAdmin;
-    }
-
-    if (route.name === 'profile') {
+    if (route.name === 'owners' || route.name === 'profile') {
       return isSuperAdmin;
     }
 
     if (route.name === 'manage') {
-      return !isSuperAdmin;
+      return isOwner;
     }
 
-    if (route.name === 'home' || route.name === 'queue' || route.name === 'tables') {
-      return !isSuperAdmin;
-    }
-
-    return !adminRoutes.includes(route.name);
+    return !isSuperAdmin;
   });
 
   return (
@@ -150,7 +154,7 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
 }
 
 export default function TabLayout() {
-  const { isSuperAdmin } = useAuth();
+  const { isSuperAdmin, isOwner, isRoleLoaded } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -160,18 +164,36 @@ export default function TabLayout() {
   // wrong screen with no active tab highlighted. This re-routes to the
   // correct landing tab in those cases.
   useEffect(() => {
+    if (!isRoleLoaded) {
+      return;
+    }
+
     const current = pathname.split('/').filter(Boolean).pop() ?? '';
 
     if (!TAB_ROUTES.includes(current)) {
       return;
     }
 
-    const allowed = isSuperAdmin ? ADMIN_TABS : OWNER_TABS;
+    const allowed = isSuperAdmin
+      ? ADMIN_TABS
+      : isOwner
+        ? OWNER_TABS
+        : STAFF_TABS;
 
     if (!allowed.includes(current)) {
       router.replace(isSuperAdmin ? '/owners' : '/home');
     }
-  }, [isSuperAdmin, pathname, router]);
+  }, [isRoleLoaded, isSuperAdmin, isOwner, pathname, router]);
+
+  // Wait for the /auth/me call to resolve so the correct role-specific tabs
+  // are rendered (and role-appropriate API calls are made).
+  if (!isRoleLoaded) {
+    return (
+      <View style={styles.loader}>
+        <ActivityIndicator size='large' color={PURPLE} />
+      </View>
+    );
+  }
 
   return (
     <Tabs
@@ -233,18 +255,18 @@ export default function TabLayout() {
         />
       )}
 
-      {isSuperAdmin ? (
+      {isOwner ? (
         <Tabs.Screen
           name='manage'
           options={{
-            href: null,
+            title: 'Manage',
           }}
         />
       ) : (
         <Tabs.Screen
           name='manage'
           options={{
-            title: 'Manage',
+            href: null,
           }}
         />
       )}
@@ -253,6 +275,13 @@ export default function TabLayout() {
 }
 
 const styles = StyleSheet.create({
+  loader: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+  },
+
   tabBarWrapper: {
     height: 68,
     shadowColor: '#000000',

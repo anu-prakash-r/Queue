@@ -105,14 +105,16 @@ export default function QueueStatus({
   waitTime = '18 m',
   servedCount = 25,
 }: QueueStatusProps) {
-  const { token } = useAuth();
+  const { token, isSuperAdmin, isRoleLoaded } = useAuth();
+
+  const canLoad = isRoleLoaded && !isSuperAdmin;
 
   const {
     data: queueItems = [],
     refetch: refetchQueues,
     isLoading: isQueuesLoading,
   } = useGetQueuesQuery('waiting', {
-    skip: !token,
+    skip: !token || !canLoad,
   });
 
   const {
@@ -120,7 +122,7 @@ export default function QueueStatus({
     refetch: refetchTables,
     isLoading: isTablesLoading,
   } = useGetTablesQuery(undefined, {
-    skip: !token,
+    skip: !token || !canLoad,
   });
 
   const waitingCount = queueItems.length;
@@ -128,11 +130,11 @@ export default function QueueStatus({
 
   useFocusEffect(
     useCallback(() => {
-      if (token) {
+      if (token && canLoad) {
         refetchQueues();
         refetchTables();
       }
-    }, [token, refetchQueues, refetchTables]),
+    }, [token, canLoad, refetchQueues, refetchTables]),
   );
 
   const isLoading = isQueuesLoading || isTablesLoading;

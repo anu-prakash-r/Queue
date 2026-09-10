@@ -41,6 +41,31 @@ export type GetOwnersResponse = {
   message?: string;
 };
 
+export type GetOwnerDetailsResponse = {
+  success?: boolean;
+  data?:
+    | Owner
+    | { owner?: Owner; data?: Owner; restaurant?: Partial<Owner> };
+  message?: string;
+};
+
+function unwrapOwnerDetails(data: GetOwnerDetailsResponse['data']): Owner | null {
+  if (!data || typeof data !== 'object') {
+    return null;
+  }
+
+  const candidate =
+    (data as { owner?: Owner }).owner ??
+    ((data as { data?: Owner }).data as Owner | null) ??
+    ((data as { restaurant?: Partial<Owner> }).restaurant as Owner | null);
+
+  if (candidate && typeof candidate === 'object') {
+    return candidate as Owner;
+  }
+
+  return data as Owner;
+}
+
 export type EditOwnerPayload = {
   name?: string;
   mobile_number?: string;
@@ -58,6 +83,15 @@ export const ownerApi = baseApi.injectEndpoints({
       query: () => '/admin/owners',
       transformResponse: (response: GetOwnersResponse) => response?.data ?? [],
       providesTags: ['Owners'],
+    }),
+
+    getOwnerDetails: builder.query<Owner | null, number>({
+      query: (ownerId) => `/admin/owners/${ownerId}`,
+      transformResponse: (response: GetOwnerDetailsResponse) =>
+        unwrapOwnerDetails(response?.data),
+      providesTags: (_result, _error, ownerId) => [
+        { type: 'OwnerDetails', id: ownerId },
+      ],
     }),
 
     createOwner: builder.mutation<CreateOwnerResponse, CreateOwnerPayload>({
@@ -78,7 +112,10 @@ export const ownerApi = baseApi.injectEndpoints({
         method: 'PUT',
         body: payload,
       }),
-      invalidatesTags: ['Owners'],
+      invalidatesTags: (_result, _error, { ownerId }) => [
+        'Owners',
+        { type: 'OwnerDetails', id: ownerId },
+      ],
     }),
 
     deleteOwner: builder.mutation<
@@ -107,6 +144,7 @@ export const ownerApi = baseApi.injectEndpoints({
 
 export const {
   useGetOwnersQuery,
+  useGetOwnerDetailsQuery,
   useCreateOwnerMutation,
   useEditOwnerMutation,
   useDeleteOwnerMutation,

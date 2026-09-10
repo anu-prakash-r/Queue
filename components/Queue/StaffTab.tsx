@@ -47,14 +47,16 @@ const ROLE_COLORS: Record<string, string> = {
 };
 
 export default function StaffTab({ width }: StaffTabProps) {
-  const { token } = useAuth();
+  const { token, isOwner, isRoleLoaded } = useAuth();
+
+  const canLoad = isRoleLoaded && isOwner;
 
   const {
     data: staff = [],
     isLoading: loading,
     error,
     refetch,
-  } = useGetStaffQuery(undefined, { skip: !token });
+  } = useGetStaffQuery(undefined, { skip: !token || !canLoad });
 
   const [refreshing, setRefreshing] = useState(false);
   const [expandedId, setExpandedId] = useState<number | string | null>(null);
@@ -76,10 +78,10 @@ export default function StaffTab({ width }: StaffTabProps) {
 
   useFocusEffect(
     useCallback(() => {
-      if (token) {
+      if (token && canLoad) {
         refetch();
       }
-    }, [token, refetch]),
+    }, [token, canLoad, refetch]),
   );
 
   const handleRefresh = useCallback(() => {

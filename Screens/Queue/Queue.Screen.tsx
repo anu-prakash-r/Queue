@@ -1,24 +1,17 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-
 import {
   ActivityIndicator,
   Keyboard,
-  Linking,
   ScrollView,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
-
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
 import { router, useFocusEffect } from 'expo-router';
-
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-
 import Toast from 'react-native-toast-message';
-
 import ConfirmationModal from '@/components/ConfirmationModal/ConfirmationModal';
 import AssignTableModal from '@/components/Queue/AssignTableModal';
 import EditQueueModal from '@/components/Queue/EditQueueModal';
@@ -26,9 +19,9 @@ import QueueCard from '@/components/Queue/QueueCard';
 import QueueDetailModal from '@/components/Queue/QueueDetailModal';
 import type { QueueItem } from '@/components/Queue/types';
 import { formatTime, formatWaitingTime } from '@/components/Queue/utils';
-
 import { useAuth } from '@/contexts/AuthContext';
 
+import { makeWhatsAppCall, openWhatsAppChat } from '@/services/contact';
 import {
   useGetQueuesQuery,
   useLazyGetQueueQuery,
@@ -58,7 +51,9 @@ function mapQueueItem(item: QueueApiItem): QueueItem {
 }
 
 export default function QueueScreen() {
-  const { token } = useAuth();
+  const { token, isSuperAdmin, isRoleLoaded } = useAuth();
+
+  const canLoad = isRoleLoaded && !isSuperAdmin;
 
   const [openMenuId, setOpenMenuId] = useState<string | number | null>(null);
 
@@ -67,7 +62,7 @@ export default function QueueScreen() {
     isLoading: loading,
     error: queueError,
     refetch: refetchQueues,
-  } = useGetQueuesQuery('waiting', { skip: !token });
+  } = useGetQueuesQuery('waiting', { skip: !token || !canLoad });
 
   const [triggerGetQueue, { isFetching: isQueueDetailFetching }] =
     useLazyGetQueueQuery();
@@ -76,21 +71,45 @@ export default function QueueScreen() {
   const [cancelQueue] = useCancelQueueMutation();
   const [seatQueue] = useSeatQueueMutation();
 
-  const { data: tablesResult } = useGetTablesQuery(undefined, { skip: !token });
+  const { data: tablesResult } = useGetTablesQuery(undefined, {
+    skip: !token || !canLoad,
+  });
 
-  const items: QueueItem[] = useMemo(
-    () => queueItems.map(mapQueueItem),
-    [queueItems],
-  );
+  const items: QueueItem[] = useMemo(() => {
+    const sortKey = (item: QueueApiItem, index: number): number => {
+      const createdAt = Date.parse(item.created_at ?? '');
+
+      if (Number.isFinite(createdAt)) {
+        return createdAt;
+      }
+
+      if (typeof item.position === 'number') {
+        return item.position;
+      }
+
+      const token = Number(item.token_number ?? item.queue_number);
+
+      if (Number.isFinite(token)) {
+        return token;
+      }
+
+      return index;
+    };
+
+    return [...queueItems]
+      .map((item, index) => ({ item, index }))
+      .sort((a, b) => sortKey(a.item, a.index) - sortKey(b.item, b.index))
+      .map(entry => mapQueueItem(entry.item));
+  }, [queueItems]);
 
   const error = queueError ? 'Could not load the queue.' : '';
 
   useFocusEffect(
     useCallback(() => {
-      if (token) {
+      if (token && canLoad) {
         refetchQueues();
       }
-    }, [token, refetchQueues]),
+    }, [token, canLoad, refetchQueues]),
   );
 
   const handleView = (item: QueueItem) => {
@@ -104,8 +123,8 @@ export default function QueueScreen() {
 
     setDetailData(null);
 
-    if (!token) {
-      setDetailError('No auth token.');
+    if (!token || !canLoad) {
+      setDetailError(canLoad ? 'No auth token.' : 'Access denied.');
 
       return;
     }
@@ -235,8 +254,6 @@ export default function QueueScreen() {
     setAssignError('');
 
     setTableNumber('');
-
-    setTables(Array.isArray(tablesResult?.tables) ? tablesResult.tables : []);
   };
 
   const [assignItem, setAssignItem] = useState<QueueItem | null>(null);
@@ -248,8 +265,6 @@ export default function QueueScreen() {
   const [tableNumber, setTableNumber] = useState('');
 
   const [assignSubmitting, setAssignSubmitting] = useState(false);
-
-  const [tables, setTables] = useState<TableItem[]>([]);
 
   const [keyboardHeight, setKeyboardHeight] = useState(0);
 
@@ -277,12 +292,10 @@ export default function QueueScreen() {
     setTableNumber('');
 
     setAssignError('');
-
-    setTables([]);
   };
 
-  const handleTableNumberChange = (text: string) => {
-    setTableNumber(text);
+  const handleTableSelect = (table: TableItem) => {
+    setTableNumber(String(table.table_number));
 
     if (assignError) {
       setAssignError('');
@@ -302,13 +315,13 @@ export default function QueueScreen() {
       return;
     }
 
-    const matchedTable = tables.find(
+    const matchedTable = (tablesResult?.tables ?? []).find(
       table => String(table.table_number) === trimmedTableNumber,
     );
 
     if (!matchedTable) {
       setAssignError(
-        tables.length === 0
+        (tablesResult?.tables ?? []).length === 0
           ? 'Could not load tables. Please try again.'
           : 'Table not found. Please enter a valid table number.',
       );
@@ -494,7 +507,12 @@ export default function QueueScreen() {
                   onRemove={handleRemovePress}
                   onCall={item => {
                     if (item.mobileNumber) {
-                      Linking.openURL(`https://wa.me/${item.mobileNumber}`);
+                      makeWhatsAppCall(item.mobileNumber);
+                    }
+                  }}
+                  onWhatsApp={item => {
+                    if (item.mobileNumber) {
+                      openWhatsAppChat(item.mobileNumber);
                     }
                   }}
                 />
@@ -549,11 +567,12 @@ export default function QueueScreen() {
       <AssignTableModal
         visible={assignVisible}
         item={assignItem}
+        tables={tablesResult?.tables ?? []}
         tableNumber={tableNumber}
         error={assignError}
         submitting={assignSubmitting}
         keyboardHeight={keyboardHeight}
-        onChangeTableNumber={handleTableNumberChange}
+        onSelectTable={handleTableSelect}
         onConfirm={confirmAssign}
         onCancel={handleCloseAssign}
       />

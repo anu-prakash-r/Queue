@@ -22,6 +22,7 @@ type QueueItem = {
 type TodaysQueueProps = {
   onViewAll?: () => void;
   onCallPress?: (item: QueueItem) => void;
+  onWhatsAppPress?: (item: QueueItem) => void;
   onAddCustomer?: () => void;
   onManageTables?: () => void;
 };
@@ -84,30 +85,58 @@ function mapQueueItem(item: QueueApiItem): QueueItem {
 
 export default function TodaysQueue({
   onCallPress,
+  onWhatsAppPress,
   onAddCustomer,
 }: TodaysQueueProps) {
-  const { token } = useAuth();
+  const { token, isSuperAdmin, isRoleLoaded } = useAuth();
+
+  const canLoad = isRoleLoaded && !isSuperAdmin;
 
   const {
     data: queueItems = [],
     isLoading: loading,
     error,
     refetch: refetchQueues,
-  } = useGetQueuesQuery('waiting', { skip: !token });
+  } = useGetQueuesQuery('waiting', {
+    skip: !token || !canLoad,
+  });
 
-  const items: QueueItem[] = useMemo(
-    () => queueItems.slice(0, MAX_ITEMS).map(mapQueueItem),
-    [queueItems],
-  );
+  const items: QueueItem[] = useMemo(() => {
+    const sortKey = (item: QueueApiItem, index: number): number => {
+      const createdAt = Date.parse(item.created_at ?? '');
+
+      if (Number.isFinite(createdAt)) {
+        return createdAt;
+      }
+
+      if (typeof item.position === 'number') {
+        return item.position;
+      }
+
+      const token = Number(item.token_number ?? item.queue_number);
+
+      if (Number.isFinite(token)) {
+        return token;
+      }
+
+      return index;
+    };
+
+    return [...queueItems]
+      .map((item, index) => ({ item, index }))
+      .sort((a, b) => sortKey(a.item, a.index) - sortKey(b.item, b.index))
+      .slice(0, MAX_ITEMS)
+      .map(entry => mapQueueItem(entry.item));
+  }, [queueItems]);
 
   const err = error ? 'Could not load the queue.' : '';
 
   useFocusEffect(
     useCallback(() => {
-      if (token) {
+      if (token && canLoad) {
         refetchQueues();
       }
-    }, [token, refetchQueues]),
+    }, [token, canLoad, refetchQueues]),
   );
 
   if (loading) {
@@ -205,16 +234,12 @@ export default function TodaysQueue({
               </View>
 
               <TouchableOpacity
-                className='h-[34px] w-[80px] flex-row items-center justify-center rounded-xl bg-[#4B197C] opacity-100 disabled:opacity-40'
+                className='h-[34px] w-[40px] flex-row items-center justify-center rounded-xl bg-[#4B197C] opacity-100 disabled:opacity-40'
                 activeOpacity={0.8}
                 disabled={!item.mobileNumber}
                 onPress={() => onCallPress?.(item)}
               >
                 <MaterialIcons name='phone' size={20} color='#FFFFFF' />
-
-                <Text className='ml-1.5 text-[14px] font-bold text-white'>
-                  CALL
-                </Text>
               </TouchableOpacity>
             </View>
           ))

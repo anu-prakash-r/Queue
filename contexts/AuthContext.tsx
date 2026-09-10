@@ -1,12 +1,25 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import * as SecureStore from 'expo-secure-store';
 import { useGetProfileQuery } from '@/store/api/authApi';
+import * as SecureStore from 'expo-secure-store';
+import React, {
+  createContext,
+  ReactNode,
+  useContext,
+  useEffect,
+  useState,
+} from 'react';
+
+import { store } from '@/store';
+import { baseApi } from '@/store/api/baseApi';
 
 type AuthContextProps = {
   token: string | null;
   setToken: (t: string | null) => Promise<void>;
   logout: () => Promise<void>;
+  role: string | null;
+  isRoleLoaded: boolean;
   isSuperAdmin: boolean;
+  isOwner: boolean;
+  isStaff: boolean;
 };
 
 const AuthContext = createContext<AuthContextProps | undefined>(undefined);
@@ -35,14 +48,21 @@ const decodePayload = (jwt: string): Record<string, unknown> => {
   }
 };
 
-const isSuperAdminRole = (role?: unknown): boolean => {
-  return typeof role === 'string' && role.trim().toLowerCase() === 'superadmin';
+const normalizeRole = (role?: unknown): string | null => {
+  if (typeof role !== 'string') {
+    return null;
+  }
+
+  const normalized = role.trim().toLowerCase();
+
+  return normalized || null;
 };
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = async () => {
     await SecureStore.deleteItemAsync('accessToken');
     await SecureStore.deleteItemAsync('refreshToken');
+    store.dispatch(baseApi.util.resetApiState());
     setToken(null);
   };
 
@@ -62,22 +82,41 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     loadToken();
   }, []);
 
-  const { data: profileResponse } = useGetProfileQuery(undefined, {
+  const {
+    data: profileResponse,
+    isSuccess: profileLoaded,
+    isError: profileFailed,
+  } = useGetProfileQuery(undefined, {
     skip: !token,
   });
 
   // Determine if current token belongs to a super admin.
   // The profile endpoint is the authoritative source; the JWT payload is a fallback.
+  const profileRole = normalizeRole(profileResponse?.data?.user?.role);
+  const jwtRole = token ? normalizeRole(decodePayload(token).role) : null;
+
+  // Role is considered resolved once the /auth/me call succeeds or fails,
+  // or when a role can already be read from the JWT payload.
+  const isRoleLoaded = token
+    ? profileLoaded || profileFailed || !!jwtRole
+    : true;
+
   const isSuperAdmin = token
-    ? isSuperAdminRole(profileResponse?.data?.user?.role) ||
-      isSuperAdminRole(decodePayload(token).role)
+    ? profileRole === 'superadmin' || jwtRole === 'superadmin'
     : false;
+
+  const role = token ? (profileRole ?? jwtRole) : null;
+
+  const isOwner = token ? role === 'owner' : false;
+
+  const isStaff = token ? !isSuperAdmin && !isOwner : false;
 
   // Persist token changes
   const updateToken = async (t: string | null) => {
     try {
       if (t) {
         await SecureStore.setItemAsync('accessToken', t);
+        store.dispatch(baseApi.util.resetApiState());
       } else {
         await SecureStore.deleteItemAsync('accessToken');
         await SecureStore.deleteItemAsync('refreshToken');
@@ -90,7 +129,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <AuthContext.Provider
-      value={{ token, setToken: updateToken, logout, isSuperAdmin }}
+      value={{
+        token,
+        setToken: updateToken,
+        logout,
+        role,
+        isRoleLoaded,
+        isSuperAdmin,
+        isOwner,
+        isStaff,
+      }}
     >
       {children}
     </AuthContext.Provider>

@@ -34,14 +34,16 @@ import {
 } from '@/components/SkeletonLoader/TablesScreenSkeleton';
 
 export default function TablesScreen() {
-  const { token } = useAuth();
+  const { token, isSuperAdmin, isRoleLoaded } = useAuth();
+
+  const canLoad = isRoleLoaded && !isSuperAdmin;
 
   const {
     data: tablesData,
     isLoading: loading,
     error,
     refetch: fetchTables,
-  } = useGetTablesQuery(undefined, { skip: !token });
+  } = useGetTablesQuery(undefined, { skip: !token || !canLoad });
 
   const [deleteTable, { isLoading: deleteLoading }] = useDeleteTableMutation();
 
@@ -69,10 +71,10 @@ export default function TablesScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      if (token) {
+      if (token && canLoad) {
         fetchTables();
       }
-    }, [token, fetchTables]),
+    }, [token, canLoad, fetchTables]),
   );
 
   useEffect(() => {
@@ -135,7 +137,7 @@ export default function TablesScreen() {
   };
 
   const confirmDeleteTable = async () => {
-    if (!deleteTarget || !token) {
+    if (!deleteTarget || !token || !canLoad) {
       return;
     }
 

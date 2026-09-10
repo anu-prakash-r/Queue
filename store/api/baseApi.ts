@@ -24,6 +24,7 @@ export const baseApi = createApi({
     'Queue',
     'Tables',
     'Owners',
+    'OwnerDetails',
     'Staff',
     'StaffDetails',
     'Restaurants',

@@ -1,4 +1,4 @@
-import { View, ScrollView, Linking } from 'react-native';
+import { View, ScrollView } from 'react-native';
 import React from 'react';
 import { StatusBar } from 'expo-status-bar';
 
@@ -12,6 +12,7 @@ import { DrawerNavigationProp } from '@react-navigation/drawer';
 
 import { HomeQueueSvg } from '@/assets/Svg';
 import { useUserProfile } from '@/hooks/useUserProfile';
+import { openWhatsAppChat, makeWhatsAppCall } from '@/services/contact';
 
 export default function HomeScreen() {
   const navigation = useNavigation<DrawerNavigationProp<any>>();
@@ -47,7 +48,12 @@ export default function HomeScreen() {
         <TodaysQueue
           onCallPress={item => {
             if (item.mobileNumber) {
-              Linking.openURL(`https://wa.me/${item.mobileNumber}`);
+              makeWhatsAppCall(item.mobileNumber);
+            }
+          }}
+          onWhatsAppPress={item => {
+            if (item.mobileNumber) {
+              openWhatsAppChat(item.mobileNumber);
             }
           }}
           onAddCustomer={() => {

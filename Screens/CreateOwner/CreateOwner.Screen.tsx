@@ -23,6 +23,7 @@ import { useAuth } from '@/contexts/AuthContext';
 
 import {
   useGetOwnersQuery,
+  useGetOwnerDetailsQuery,
   useCreateOwnerMutation,
   useEditOwnerMutation,
 } from '@/store/api/ownerApi';
@@ -35,6 +36,10 @@ export default function CreateOwnerScreen() {
   }>();
 
   const { data: owners = [] } = useGetOwnersQuery(undefined, { skip: !token });
+
+  const { data: ownerDetails } = useGetOwnerDetailsQuery(Number(ownerId), {
+    skip: !ownerId || !token,
+  });
 
   const [createOwner] = useCreateOwnerMutation();
   const [editOwner] = useEditOwnerMutation();
@@ -90,7 +95,7 @@ export default function CreateOwnerScreen() {
       return;
     }
 
-    const owner = owners.find(o => o.id === Number(ownerId));
+    const owner = ownerDetails ?? owners.find(o => o.id === Number(ownerId));
 
     if (owner) {
       setName(owner.name ?? '');
@@ -109,7 +114,7 @@ export default function CreateOwnerScreen() {
 
       setAddress(owner.address ?? '');
     }
-  }, [ownerId, token, owners]);
+  }, [ownerId, token, owners, ownerDetails]);
 
   const clearError = (
     field:

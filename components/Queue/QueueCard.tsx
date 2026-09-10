@@ -15,6 +15,7 @@ type QueueCardProps = {
   onAssignTable: (item: QueueItem) => void;
   onRemove: (item: QueueItem) => void;
   onCall: (item: QueueItem) => void;
+  onWhatsApp: (item: QueueItem) => void;
 };
 
 export default function QueueCard({
@@ -26,6 +27,7 @@ export default function QueueCard({
   onAssignTable,
   onRemove,
   onCall,
+  onWhatsApp,
 }: QueueCardProps) {
   return (
     <View className='mb-3 rounded-2xl border border-[#E9E2ED] bg-white px-4 py-3 shadow-md'>
@@ -134,14 +136,12 @@ export default function QueueCard({
         </Text>
 
         <TouchableOpacity
-          className='h-[34px] w-[90px] flex-row items-center justify-center rounded-xl bg-[#4B197C] opacity-100 disabled:opacity-40'
+          className='h-[34px] w-[40px] flex-row items-center justify-center rounded-xl bg-[#4B197C] opacity-100 disabled:opacity-40'
           activeOpacity={0.8}
           disabled={!item.mobileNumber}
           onPress={() => onCall(item)}
         >
           <MaterialIcons name='phone' size={18} color='#FFFFFF' />
-
-          <Text className='ml-1.5 text-[14px] font-bold text-white'>CALL</Text>
         </TouchableOpacity>
       </View>
     </View>

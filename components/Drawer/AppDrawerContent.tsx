@@ -68,13 +68,20 @@ const DRAWER_ITEMS = [
 
 export default function AppDrawerContent(props: DrawerContentComponentProps) {
   const pathname = usePathname();
-  const { logout, isSuperAdmin } = useAuth();
+  const { logout, isSuperAdmin, isOwner } = useAuth();
 
   const { name, restaurant } = useUserProfile();
 
   const drawerItems = isSuperAdmin
     ? DRAWER_ITEMS.filter(item => item.match === 'owners' || item.match === 'profile')
-    : DRAWER_ITEMS.filter(item => item.match !== 'owners' && item.match !== 'profile');
+    : isOwner
+      ? DRAWER_ITEMS.filter(item => item.match !== 'owners' && item.match !== 'profile')
+      : DRAWER_ITEMS.filter(
+          item =>
+            item.match === 'home' ||
+            item.match === 'queue' ||
+            item.match === 'tables',
+        );
 
   const handleLogout = () => {
     Alert.alert('Logout', 'Are you sure you want to logout?', [

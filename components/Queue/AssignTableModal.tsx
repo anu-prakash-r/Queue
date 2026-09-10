@@ -4,8 +4,8 @@ import {
   ActivityIndicator,
   Modal,
   Pressable,
+  ScrollView,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -13,15 +13,17 @@ import {
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 
 import type { QueueItem } from '@/components/Queue/types';
+import type { TableItem } from '@/store/api/tableApi';
 
 type AssignTableModalProps = {
   visible: boolean;
   item: QueueItem | null;
+  tables: TableItem[];
   tableNumber: string;
   error: string;
   submitting: boolean;
   keyboardHeight: number;
-  onChangeTableNumber: (text: string) => void;
+  onSelectTable: (table: TableItem) => void;
   onConfirm: () => void;
   onCancel: () => void;
 };
@@ -29,14 +31,23 @@ type AssignTableModalProps = {
 export default function AssignTableModal({
   visible,
   item,
+  tables,
   tableNumber,
   error,
   submitting,
   keyboardHeight,
-  onChangeTableNumber,
+  onSelectTable,
   onConfirm,
   onCancel,
 }: AssignTableModalProps) {
+const availableTables = tables.filter(table => {
+    if (table.status?.trim().toLowerCase() !== 'available') return false;
+    if (item && item.people > 0 && table.seating_capacity < item.people) return false;
+    return true;
+  });
+  const isTableSelected = (table: TableItem): boolean =>
+    String(table.table_number) === tableNumber.trim();
+
   return (
     <Modal
       transparent
@@ -48,7 +59,10 @@ export default function AssignTableModal({
         className='flex-1 justify-end'
         style={{ paddingBottom: keyboardHeight }}
       >
-        <Pressable onPress={onCancel} className='absolute inset-0 bg-black/40' />
+        <Pressable
+          onPress={onCancel}
+          className='absolute inset-0 bg-black/40'
+        />
 
         <View className='max-h-[85%] rounded-t-3xl bg-white p-5 pb-8'>
           <View className='mb-4 items-center'>
@@ -76,34 +90,80 @@ export default function AssignTableModal({
           )}
 
           <Text className='mb-2 text-[14px] font-medium text-[#17132F]'>
-            Table Number
-            <Text className='text-[#E31B23]'> *</Text>
+            Available Tables
           </Text>
 
-          <View
-            className={`h-[48px] flex-row items-center rounded-xl border bg-white px-3 ${
-              error ? 'border-[#E31B23]' : 'border-[#D8D2E2]'
-            }`}
-          >
-            <MaterialIcons
-              name='table-restaurant'
-              size={20}
-              color='#777180'
-            />
-
-            <TextInput
-              value={tableNumber}
-              onChangeText={onChangeTableNumber}
-              placeholder='Enter table number (e.g. 5)'
-              placeholderTextColor='#77718A'
-              keyboardType='number-pad'
-              className='ml-2 h-full flex-1 text-[14px] text-[#17132F]'
-            />
-          </View>
-
           {error ? (
-            <Text className='mt-1 text-[12px] text-[#E31B23]'>{error}</Text>
+            <Text className='mb-2 text-[12px] text-[#E31B23]'>{error}</Text>
           ) : null}
+
+          {availableTables.length === 0 ? (
+            <View className='items-center rounded-xl border border-dashed border-[#D8D2E2] bg-[#FAF8FB] px-4 py-6'>
+              <MaterialIcons name='event-busy' size={22} color='#8D8791' />
+
+              <Text className='mt-2 text-[13px] text-[#77718A]'>
+                {item
+                  ? 'No available tables for this party size right now.'
+                  : 'No available tables right now.'}
+              </Text>
+            </View>
+          ) : (
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              style={{ maxHeight: 220 }}
+            >
+              <View className='gap-2 pb-1'>
+                {availableTables.map(table => {
+                  const selected = isTableSelected(table);
+
+                  const label =
+                    table.table_name?.trim() || `Table ${table.table_number}`;
+
+                  return (
+                    <TouchableOpacity
+                      key={table.id}
+                      activeOpacity={0.7}
+                      onPress={() => onSelectTable(table)}
+                      className={`flex-row items-center justify-between rounded-xl border px-4 py-3 ${
+                        selected
+                          ? 'border-[#2E7D32] bg-[#E8F5E9]'
+                          : 'border-[#E9E2ED] bg-white'
+                      }`}
+                    >
+                      <View className='flex-1 pr-3'>
+                        <Text
+                          numberOfLines={1}
+                          className={`text-[14px] font-bold ${
+                            selected ? 'text-[#2E7D32]' : 'text-[#24113D]'
+                          }`}
+                        >
+                          {label}
+                        </Text>
+
+                        <Text
+                          className={`mt-0.5 text-[12px] ${
+                            selected ? 'text-[#2E7D32]' : 'text-[#77718A]'
+                          }`}
+                        >
+                          {table.seating_capacity > 0
+                            ? `${table.seating_capacity} seats`
+                            : 'Table'}
+                        </Text>
+                      </View>
+
+                      {selected && (
+                        <MaterialIcons
+                          name='check-circle'
+                          size={22}
+                          color='#2E7D32'
+                        />
+                      )}
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </ScrollView>
+          )}
 
           <View className='mt-5 flex-row gap-3'>
             <TouchableOpacity
@@ -119,9 +179,13 @@ export default function AssignTableModal({
 
             <TouchableOpacity
               activeOpacity={0.8}
-              disabled={submitting}
+              disabled={submitting || availableTables.length === 0 || !tableNumber.trim()}
               onPress={onConfirm}
-              className='h-12 flex-1 items-center justify-center rounded-xl bg-[#35116B]'
+              className={`h-12 flex-1 items-center justify-center rounded-xl ${
+                submitting || availableTables.length === 0 || !tableNumber.trim()
+                  ? 'bg-[#A894B5]'
+                  : 'bg-[#35116B]'
+              }`}
             >
               {submitting ? (
                 <ActivityIndicator size='small' color='#FFFFFF' />

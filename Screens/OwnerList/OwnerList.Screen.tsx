@@ -46,13 +46,15 @@ export default function OwnerListScreen({
   showBack = true,
   bottomSafeArea = true,
 }: OwnerListScreenProps) {
-  const { token } = useAuth();
+  const { token, isSuperAdmin, isRoleLoaded } = useAuth();
+
+  const canLoad = isRoleLoaded && isSuperAdmin;
 
   const {
     data: owners = [],
     isLoading: loading,
     refetch: fetchOwners,
-  } = useGetOwnersQuery(undefined, { skip: !token });
+  } = useGetOwnersQuery(undefined, { skip: !token || !canLoad });
 
   const [deleteOwner] = useDeleteOwnerMutation();
   const [toggleOwnerActive] = useToggleOwnerActiveMutation();
@@ -75,10 +77,10 @@ export default function OwnerListScreen({
 
   useFocusEffect(
     useCallback(() => {
-      if (token) {
+      if (token && canLoad) {
         fetchOwners();
       }
-    }, [token, fetchOwners]),
+    }, [token, canLoad, fetchOwners]),
   );
 
   useEffect(() => {

@@ -33,14 +33,16 @@ const BORDER = '#E8E2EB';
 const TEXT_GRAY = '#6F6875';
 
 export default function RestaurantTab({ width }: RestaurantTabProps) {
-  const { token } = useAuth();
+  const { token, isOwner, isRoleLoaded } = useAuth();
+
+  const canLoad = isRoleLoaded && isOwner;
 
   const {
     data: restaurants = [],
     isLoading: loading,
     error,
     refetch,
-  } = useGetRestaurantsQuery(undefined, { skip: !token });
+  } = useGetRestaurantsQuery(undefined, { skip: !token || !canLoad });
 
   const [refreshing, setRefreshing] = useState(false);
 
@@ -67,10 +69,10 @@ export default function RestaurantTab({ width }: RestaurantTabProps) {
 
   useFocusEffect(
     useCallback(() => {
-      if (token) {
+      if (token && canLoad) {
         refetch();
       }
-    }, [token, refetch]),
+    }, [token, canLoad, refetch]),
   );
 
   const handleRefresh = useCallback(() => {
