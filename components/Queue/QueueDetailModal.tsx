@@ -1,5 +1,4 @@
 import React from 'react';
-
 import {
   ActivityIndicator,
   Linking,
@@ -9,9 +8,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-
 import type { QueueItem } from '@/components/Queue/types';
 import { formatTime } from '@/components/Queue/utils';
 import { QueueItem as QueueApiItem } from '@/store/api/queueApi';
@@ -59,6 +56,7 @@ export default function QueueDetailModal({
               className='h-8 w-8 items-center justify-center'
               activeOpacity={0.7}
               onPress={onClose}
+              hitSlop={10}
             >
               <MaterialIcons name='close' size={24} color='#777180' />
             </TouchableOpacity>
@@ -80,6 +78,7 @@ export default function QueueDetailModal({
                 className='mt-4 rounded-xl bg-[#4B197C] px-6 py-2.5'
                 activeOpacity={0.8}
                 onPress={onRetry}
+                hitSlop={10}
               >
                 <Text className='text-[13px] font-bold text-white'>RETRY</Text>
               </TouchableOpacity>
@@ -112,6 +111,7 @@ export default function QueueDetailModal({
 
                   <TouchableOpacity
                     className='flex-row items-center rounded-lg bg-[#24113D] px-3 py-2'
+                    hitSlop={10}
                     onPress={() => {
                       const phoneNumber =
                         data.mobile_number ?? data.customer?.mobile_number;
@@ -154,9 +154,7 @@ export default function QueueDetailModal({
                       ? `${Math.round(data.estimated_wait)}m`
                       : typeof data.waiting_time === 'number'
                         ? `${Math.round(data.waiting_time)}m`
-                        : (data.estimated_wait ??
-                          data.waiting_time ??
-                          '--')
+                        : (data.estimated_wait ?? data.waiting_time ?? '--')
                   }
                 />
 

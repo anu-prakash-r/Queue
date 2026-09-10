@@ -1,9 +1,7 @@
 import React from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { Text, TouchableOpacity, View } from 'react-native';
-import { router } from 'expo-router';
+import { Text, View } from 'react-native';
 import QueueTabs from '@/components/Queue/QueueTabs';
 
 export default function ManageScreen() {

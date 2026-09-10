@@ -83,6 +83,7 @@ export default function QueueTabs({ showCustomer = true }: Props) {
                 onPress={() => handleTabPress(index)}
                 activeOpacity={0.7}
                 className='flex-1 items-center justify-center py-4'
+                hitSlop={10}
               >
                 <Text
                   className={`text-base font-semibold ${
@@ -151,6 +152,7 @@ export default function QueueTabs({ showCustomer = true }: Props) {
         <TouchableOpacity
           onPress={handleFloatingButtonPress}
           activeOpacity={0.8}
+          hitSlop={10}
           className='h-14 w-14 flex-row items-center justify-center overflow-hidden rounded-full bg-[#4d13af]'
           style={{
             elevation: 6,

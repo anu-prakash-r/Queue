@@ -1,9 +1,6 @@
 import React from 'react';
-
 import { Text, TouchableOpacity, View } from 'react-native';
-
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-
 import type { QueueItem } from '@/components/Queue/types';
 
 type QueueCardProps = {
@@ -27,7 +24,6 @@ export default function QueueCard({
   onAssignTable,
   onRemove,
   onCall,
-  onWhatsApp,
 }: QueueCardProps) {
   return (
     <View className='mb-3 rounded-2xl border border-[#E9E2ED] bg-white px-4 py-3 shadow-md'>
@@ -71,6 +67,7 @@ export default function QueueCard({
           className='h-[34px] w-[30px] items-center justify-center'
           activeOpacity={0.7}
           onPress={onToggleMenu}
+          hitSlop={10}
         >
           <MaterialIcons name='more-vert' size={24} color='#777180' />
         </TouchableOpacity>
@@ -82,6 +79,7 @@ export default function QueueCard({
             className='flex-row items-center border-b border-[#E9E2ED] px-4 py-3'
             activeOpacity={0.7}
             onPress={() => onView(item)}
+            hitSlop={10}
           >
             <MaterialIcons name='visibility' size={20} color='#4B197C' />
 
@@ -94,6 +92,7 @@ export default function QueueCard({
             className='flex-row items-center border-b border-[#E9E2ED] px-4 py-3'
             activeOpacity={0.7}
             onPress={() => onEdit(item)}
+            hitSlop={10}
           >
             <MaterialIcons name='edit' size={20} color='#4B197C' />
 
@@ -106,6 +105,7 @@ export default function QueueCard({
             className='flex-row items-center border-b border-[#E9E2ED] px-4 py-3'
             activeOpacity={0.7}
             onPress={() => onAssignTable(item)}
+            hitSlop={10}
           >
             <MaterialIcons name='table-restaurant' size={20} color='#4B197C' />
 
@@ -117,6 +117,7 @@ export default function QueueCard({
           <TouchableOpacity
             className='flex-row items-center px-4 py-3'
             activeOpacity={0.7}
+            hitSlop={10}
             onPress={() => onRemove(item)}
           >
             <MaterialIcons name='person-remove' size={20} color='#C62828' />
@@ -140,6 +141,7 @@ export default function QueueCard({
           activeOpacity={0.8}
           disabled={!item.mobileNumber}
           onPress={() => onCall(item)}
+          hitSlop={10}
         >
           <MaterialIcons name='phone' size={18} color='#FFFFFF' />
         </TouchableOpacity>

@@ -1,8 +1,7 @@
 import React, { useCallback, useMemo } from 'react';
-import { ActivityIndicator, Text, TouchableOpacity, View } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { router, useFocusEffect } from 'expo-router';
-
 import { useAuth } from '@/contexts/AuthContext';
 import {
   useGetQueuesQuery,
@@ -155,6 +154,7 @@ export default function TodaysQueue({
             className='flex-row items-center'
             activeOpacity={0.7}
             onPress={() => router.push('/queue')}
+            hitSlop={10}
           >
             <Text className='text-[12px] font-semibold text-[#442F52]'>
               View All
@@ -172,6 +172,7 @@ export default function TodaysQueue({
               className='mt-3 rounded-xl bg-[#4B197C] px-5 py-2'
               activeOpacity={0.8}
               onPress={() => refetchQueues()}
+              hitSlop={10}
             >
               <Text className='text-[13px] font-bold text-white'>RETRY</Text>
             </TouchableOpacity>
@@ -238,6 +239,7 @@ export default function TodaysQueue({
                 activeOpacity={0.8}
                 disabled={!item.mobileNumber}
                 onPress={() => onCallPress?.(item)}
+                hitSlop={10}
               >
                 <MaterialIcons name='phone' size={20} color='#FFFFFF' />
               </TouchableOpacity>
@@ -250,6 +252,7 @@ export default function TodaysQueue({
             className='h-[44px] flex-1 flex-row items-center justify-center rounded-xl  bg-[#4B197C]'
             activeOpacity={0.7}
             onPress={onAddCustomer}
+            hitSlop={10}
           >
             <MaterialIcons name='person-add-alt-1' size={22} color='white' />
 

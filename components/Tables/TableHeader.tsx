@@ -20,7 +20,7 @@ export default function TablesHeader({ onBack }: Props) {
         <TouchableOpacity
           activeOpacity={0.8}
           onPress={() => router.push('/addTable')}
-
+          hitSlop={10}
           className='h-[32px] w-[32px] items-center justify-center rounded-full bg-white'
         >
           <MaterialIcons name='add' size={26} color='#35116B' />

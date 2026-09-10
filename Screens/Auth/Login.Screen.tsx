@@ -25,10 +25,7 @@ import CountryPicker, {
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 
 import { OnboardSvg, SarasSvg } from '@/assets/Svg';
-import {
-  useSendOtpMutation,
-  useVerifyOtpMutation,
-} from '@/store/api/authApi';
+import { useSendOtpMutation, useVerifyOtpMutation } from '@/store/api/authApi';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function LoginScreen() {
@@ -271,6 +268,7 @@ export default function LoginScreen() {
                 activeOpacity={0.7}
                 onPress={handleOtpBack}
                 className='absolute left-3 top-12 z-10 h-10 w-10 items-center justify-center rounded-full bg-[#F4EFF7]'
+                hitSlop={10}
               >
                 <MaterialIcons name='arrow-back' size={24} color='#351467' />
               </TouchableOpacity>
@@ -311,6 +309,7 @@ export default function LoginScreen() {
                   <TouchableOpacity
                     className='h-full flex-row items-center px-4'
                     onPress={() => setCountryPickerVisible(true)}
+                    hitSlop={10}
                   >
                     <CountryPicker
                       countryCode={countryCode}
@@ -359,6 +358,7 @@ export default function LoginScreen() {
                   onPress={handleGetOTP}
                   activeOpacity={0.8}
                   disabled={isSendingOtp}
+                  hitSlop={10}
                 >
                   {isSendingOtp ? (
                     <ActivityIndicator color='white' />
@@ -396,6 +396,7 @@ export default function LoginScreen() {
 
                       router.push('/register');
                     }}
+                    hitSlop={10}
                   >
                     <Text className='ml-1 text-[14px] font-bold text-[#351467]'>
                       Register
@@ -490,6 +491,7 @@ export default function LoginScreen() {
                   className='mt-6 h-[50px] flex-row items-center justify-center rounded-2xl bg-[#6C2BD9]'
                   onPress={handleVerifyOTP}
                   activeOpacity={0.8}
+                  hitSlop={10}
                 >
                   <MaterialIcons name='lock-outline' size={24} color='white' />
 
@@ -514,6 +516,7 @@ export default function LoginScreen() {
                   className='mt-5 items-center'
                   onPress={handleChangeMobile}
                   activeOpacity={0.7}
+                  hitSlop={10}
                 >
                   <Text className='text-[15px] font-semibold text-[#6C2BD9]'>
                     Change Mobile Number

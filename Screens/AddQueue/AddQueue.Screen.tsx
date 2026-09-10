@@ -154,6 +154,7 @@ export default function AddQueueScreen() {
               activeOpacity={0.7}
               onPress={handleBack}
               className='mr-5'
+              hitSlop={10}
             >
               <MaterialIcons name='arrow-back' size={24} color='#FFFFFF' />
             </TouchableOpacity>
@@ -234,6 +235,7 @@ export default function AddQueueScreen() {
                   activeOpacity={0.7}
                   onPress={decreasePartySize}
                   className='w-[50px] items-center justify-center border-r border-[#D8D2E2]'
+                  hitSlop={10}
                 >
                   <Entypo name='minus' size={24} color='black' />
                 </TouchableOpacity>
@@ -248,6 +250,7 @@ export default function AddQueueScreen() {
                   activeOpacity={0.7}
                   onPress={increasePartySize}
                   className='w-[50px] items-center justify-center border-l border-[#D8D2E2]'
+                  hitSlop={10}
                 >
                   <Entypo name='plus' size={24} color='black' />
                 </TouchableOpacity>
@@ -302,6 +305,7 @@ export default function AddQueueScreen() {
               activeOpacity={0.7}
               onPress={handleCancel}
               className='h-[46px] flex-1 items-center justify-center rounded-xl border border-[#35116B] bg-white'
+              hitSlop={10}
             >
               <Text className='text-[14px] font-semibold text-[#35116B]'>
                 CANCEL
@@ -312,6 +316,7 @@ export default function AddQueueScreen() {
               activeOpacity={0.8}
               onPress={handleSave}
               className='h-[46px] flex-1 items-center justify-center rounded-xl bg-[#35116B]'
+              hitSlop={10}
             >
               <Text className='text-[14px] font-semibold text-white'>
                 ADD TO QUEUE

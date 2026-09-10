@@ -80,11 +80,8 @@ export default function OwnerAccessScreen() {
   }>();
 
   const isEditMode = mode === 'edit' && Boolean(restaurant);
-
   const isStaffEditMode = mode === 'edit' && Boolean(staff);
-
   const isCustomerEditMode = mode === 'edit' && Boolean(customer);
-
   const restaurantScrollRef = useRef<ScrollView>(null);
   const staffScrollRef = useRef<ScrollView>(null);
   const customerScrollRef = useRef<ScrollView>(null);
@@ -103,30 +100,23 @@ export default function OwnerAccessScreen() {
   };
 
   const [activeTab] = useState<TabType>(getInitialTab());
-
   const [submitting, setSubmitting] = useState(false);
-
   const [restaurantName, setRestaurantName] = useState('');
   const [city, setCity] = useState('');
   const [address, setAddress] = useState('');
   const [openingTime, setOpeningTime] = useState('');
   const [closingTime, setClosingTime] = useState('');
-
   const [staffName, setStaffName] = useState('');
   const [mobileNumber, setMobileNumber] = useState('');
   const [role, setRole] = useState('');
-
   const [customerName, setCustomerName] = useState('');
   const [customerMobileNumber, setCustomerMobileNumber] = useState('');
   const [customerEmail, setCustomerEmail] = useState('');
   const [customerNotes, setCustomerNotes] = useState('');
-
   const [createRestaurant] = useCreateRestaurantMutation();
   const [updateRestaurant] = useUpdateRestaurantMutation();
-
   const [createStaff] = useCreateStaffMutation();
   const [updateStaff] = useUpdateStaffMutation();
-
   const [createCustomer] = useCreateCustomerMutation();
   const [updateCustomer] = useUpdateCustomerMutation();
 
@@ -419,9 +409,7 @@ export default function OwnerAccessScreen() {
 
       if (isStaffEditMode && id) {
         const response = await updateStaff({ id, payload }).unwrap();
-
         const failed = Boolean(response && response.success === false);
-
         if (!failed) {
           showToast(
             'success',
@@ -446,7 +434,6 @@ export default function OwnerAccessScreen() {
       }
 
       const response = await createStaff(payload).unwrap();
-
       const failed = Boolean(response && response.success === false);
 
       if (!failed) {
@@ -509,7 +496,6 @@ export default function OwnerAccessScreen() {
 
       if (isCustomerEditMode && id) {
         const response = await updateCustomer({ id, payload }).unwrap();
-
         const failed = Boolean(response && response.success === false);
 
         if (!failed) {
@@ -536,7 +522,6 @@ export default function OwnerAccessScreen() {
       }
 
       const response = await createCustomer(payload).unwrap();
-
       const failed = Boolean(response && response.success === false);
 
       if (!failed) {
@@ -589,6 +574,7 @@ export default function OwnerAccessScreen() {
           activeOpacity={0.7}
           onPress={handleBackPress}
           className='absolute left-5 z-10 h-10 w-10 items-center justify-center'
+          hitSlop={10}
         >
           <Ionicons name='arrow-back' size={24} color='#111827' />
         </TouchableOpacity>
@@ -739,6 +725,7 @@ export default function OwnerAccessScreen() {
                 onPress={handleCreateRestaurant}
                 disabled={submitting}
                 className='h-14 items-center justify-center rounded-xl bg-[#4d13af]'
+                hitSlop={10}
               >
                 {submitting ? (
                   <ActivityIndicator size='small' color='#FFFFFF' />
@@ -857,6 +844,7 @@ export default function OwnerAccessScreen() {
                 onPress={handleCreateStaff}
                 disabled={submitting}
                 className='h-14 items-center justify-center rounded-xl bg-[#4d13af]'
+                hitSlop={10}
               >
                 {submitting ? (
                   <ActivityIndicator size='small' color='#FFFFFF' />
@@ -1005,6 +993,7 @@ export default function OwnerAccessScreen() {
                 onPress={handleCreateCustomer}
                 disabled={submitting}
                 className='h-14 items-center justify-center rounded-xl bg-[#4d13af]'
+                hitSlop={10}
               >
                 {submitting ? (
                   <ActivityIndicator size='small' color='#FFFFFF' />

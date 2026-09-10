@@ -267,6 +267,7 @@ const AddTableForm = forwardRef<AddTableFormRef, AddTableFormProps>(
                   activeOpacity={0.7}
                   onPress={decreaseCapacity}
                   className='w-[50px] items-center justify-center border-r border-[#D8D2E2]'
+                  hitSlop={10}
                 >
                   <Entypo name='minus' size={24} color='black' />
                 </TouchableOpacity>
@@ -281,6 +282,7 @@ const AddTableForm = forwardRef<AddTableFormRef, AddTableFormProps>(
                   activeOpacity={0.7}
                   onPress={increaseCapacity}
                   className='w-[50px] items-center justify-center border-l border-[#D8D2E2]'
+                  hitSlop={10}
                 >
                   <Entypo name='plus' size={24} color='black' />
                 </TouchableOpacity>
@@ -319,6 +321,7 @@ const AddTableForm = forwardRef<AddTableFormRef, AddTableFormProps>(
                 setFloorDropdownOpen(false);
                 Keyboard.dismiss();
               }}
+              hitSlop={10}
               className={`h-[44px] flex-row items-center justify-between rounded-xl border bg-white px-4 ${
                 areaError ? 'border-[#E31B23]' : 'border-[#D8D2E2]'
               }`}
@@ -360,6 +363,7 @@ const AddTableForm = forwardRef<AddTableFormRef, AddTableFormProps>(
                       className={`h-[45px] flex-row items-center justify-between px-4 ${
                         selected ? 'bg-[#F4F0F8]' : 'bg-white'
                       }`}
+                      hitSlop={10}
                     >
                       <Text
                         className={`text-[14px] ${
@@ -400,6 +404,7 @@ const AddTableForm = forwardRef<AddTableFormRef, AddTableFormProps>(
                 setAreaDropdownOpen(false);
                 Keyboard.dismiss();
               }}
+              hitSlop={10}
               className={`h-[44px] flex-row items-center justify-between rounded-xl border bg-white px-4 ${
                 floorError ? 'border-[#E31B23]' : 'border-[#D8D2E2]'
               }`}
@@ -443,6 +448,7 @@ const AddTableForm = forwardRef<AddTableFormRef, AddTableFormProps>(
                       className={`h-[45px] flex-row items-center justify-between px-4 ${
                         selected ? 'bg-[#F4F0F8]' : 'bg-white'
                       }`}
+                      hitSlop={10}
                     >
                       <Text
                         className={`text-[14px] ${
@@ -485,6 +491,7 @@ const AddTableForm = forwardRef<AddTableFormRef, AddTableFormProps>(
                       activeOpacity={0.7}
                       onPress={() => setTableType(type)}
                       className='flex-row items-center'
+                      hitSlop={10}
                     >
                       <View
                         className={`h-[21px] w-[21px] items-center justify-center rounded-full border-2 ${
@@ -543,6 +550,7 @@ const AddTableForm = forwardRef<AddTableFormRef, AddTableFormProps>(
                           ? 'border-[#35116B] bg-[#F7F3FA]'
                           : 'border-[#D8D2E2] bg-white'
                       }`}
+                      hitSlop={10}
                     >
                       <View className='flex-row items-center'>
                         <View
@@ -634,6 +642,7 @@ const AddTableForm = forwardRef<AddTableFormRef, AddTableFormProps>(
             activeOpacity={0.7}
             onPress={() => setIsActive(previous => !previous)}
             className='mb-5 flex-row items-center'
+            hitSlop={10}
           >
             <View
               className={`h-[20px] w-[20px] items-center justify-center rounded-[3px] ${

@@ -1,9 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-
 import { useFocusEffect } from '@react-navigation/native';
-
 import {
-  ActivityIndicator,
   Dimensions,
   FlatList,
   Modal,
@@ -12,21 +9,17 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { router } from 'expo-router';
 import Toast from 'react-native-toast-message';
-
 import { useAuth } from '@/contexts/AuthContext';
-
 import {
   useGetOwnersQuery,
   useDeleteOwnerMutation,
   useToggleOwnerActiveMutation,
   Owner,
 } from '@/store/api/ownerApi';
-
 import ConfirmationModal from '@/components/ConfirmationModal/ConfirmationModal';
 import OwnerListSkeleton from '@/components/SkeletonLoader/Skeleton.OwnerList';
 
@@ -259,6 +252,7 @@ export default function OwnerListScreen({
           }
         }}
         className='mb-4 rounded-2xl bg-white p-4'
+        hitSlop={10}
       >
         <View className='flex-row items-center'>
           <View className='h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#F1EAF5]'>
@@ -314,6 +308,7 @@ export default function OwnerListScreen({
                 handleThreeDotPress(owner.id);
               }}
               className='ml-2 h-10 w-10 items-center justify-center rounded-xl bg-[#F8F4FA]'
+              hitSlop={10}
             >
               <MaterialIcons name='more-vert' size={22} color='#442F52' />
             </TouchableOpacity>
@@ -415,6 +410,7 @@ export default function OwnerListScreen({
             activeOpacity={0.7}
             onPress={() => setSearch('')}
             className='mt-4 rounded-xl bg-[#442F52] px-4 py-2.5'
+            hitSlop={10}
           >
             <Text className='text-[12px] font-semibold text-white'>
               Clear Search
@@ -445,6 +441,7 @@ export default function OwnerListScreen({
                   router.back();
                 }}
                 className='h-10 w-10 items-center justify-center rounded-xl bg-white'
+                hitSlop={10}
               >
                 <MaterialIcons name='arrow-back' size={21} color='#442F52' />
               </TouchableOpacity>
@@ -465,6 +462,7 @@ export default function OwnerListScreen({
             activeOpacity={0.8}
             onPress={handleCreateOwner}
             className='h-10 w-10 items-center justify-center rounded-xl bg-[#442F52]'
+            hitSlop={10}
           >
             <MaterialIcons name='add' size={22} color='#FFFFFF' />
           </TouchableOpacity>
@@ -544,6 +542,7 @@ export default function OwnerListScreen({
                   activeOpacity={0.7}
                   onPress={closeMenu}
                   className='h-9 w-9 items-center justify-center rounded-full bg-[#F8F4FA]'
+                  hitSlop={10}
                 >
                   <MaterialIcons name='close' size={20} color='#442F52' />
                 </TouchableOpacity>
@@ -555,6 +554,7 @@ export default function OwnerListScreen({
                 activeOpacity={0.7}
                 onPress={() => handleEditOwner(selectedOwner)}
                 className='flex-row items-center rounded-xl px-2 py-4'
+                hitSlop={10}
               >
                 <View className='h-10 w-10 items-center justify-center rounded-xl bg-[#F1EAF5]'>
                   <MaterialIcons name='edit' size={20} color='#442F52' />
@@ -571,6 +571,7 @@ export default function OwnerListScreen({
                 activeOpacity={0.7}
                 onPress={() => handleToggleOwner(selectedOwner)}
                 className='flex-row items-center rounded-xl px-2 py-4'
+                hitSlop={10}
               >
                 <View
                   className={`h-10 w-10 items-center justify-center rounded-xl ${
@@ -603,6 +604,7 @@ export default function OwnerListScreen({
                 activeOpacity={0.7}
                 onPress={() => handleDeleteOwner(selectedOwner)}
                 className='mt-1 flex-row items-center rounded-xl px-2 py-4'
+                hitSlop={10}
               >
                 <View className='h-10 w-10 items-center justify-center rounded-xl bg-[#FFF0F0]'>
                   <MaterialIcons

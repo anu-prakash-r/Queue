@@ -84,6 +84,7 @@ export default function RegisterScreen() {
               activeOpacity={0.7}
               onPress={() => router.back()}
               className='absolute left-0 h-11 w-11 items-center justify-center rounded-full bg-[#F4EFF7]'
+              hitSlop={10}
             >
               <MaterialIcons name='arrow-back' size={24} color='#351467' />
             </TouchableOpacity>
@@ -157,6 +158,7 @@ export default function RegisterScreen() {
             activeOpacity={0.8}
             onPress={handleRegister}
             className='mt-9 h-[52px] items-center justify-center rounded-xl bg-[#351467]'
+            hitSlop={10}
           >
             <Text className='text-[16px] font-bold text-white'>Get OTP</Text>
           </TouchableOpacity>
@@ -169,6 +171,7 @@ export default function RegisterScreen() {
             <TouchableOpacity
               activeOpacity={0.7}
               onPress={() => router.push('/login')}
+              hitSlop={10}
             >
               <Text className='ml-1 text-[14px] font-bold text-[#351467]'>
                 Login

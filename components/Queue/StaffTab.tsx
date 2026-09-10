@@ -1,5 +1,4 @@
 import React, { useCallback, useState } from 'react';
-
 import {
   ActivityIndicator,
   FlatList,
@@ -10,10 +9,8 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
-
 import {
   useGetStaffQuery,
   useLazyGetStaffDetailsQuery,
@@ -22,11 +19,8 @@ import {
   StaffDetails,
   StaffItem,
 } from '@/store/api/staffApi';
-
 import { useAuth } from '@/contexts/AuthContext';
-
 import ConfirmationModal from '@/components/ConfirmationModal/ConfirmationModal';
-
 import Toast from 'react-native-toast-message';
 import { StaffTabSkeleton } from '../SkeletonLoader/StaffSkeleton';
 
@@ -282,6 +276,7 @@ export default function StaffTab({ width }: StaffTabProps) {
           activeOpacity={0.75}
           onPress={() => toggleExpanded(staffId)}
           className='px-4 py-4'
+          hitSlop={10}
         >
           <View className='flex-row items-center'>
             <View className='h-12 w-12 items-center justify-center rounded-full bg-[#F4F0FF]'>
@@ -352,6 +347,7 @@ export default function StaffTab({ width }: StaffTabProps) {
               <TouchableOpacity
                 activeOpacity={0.7}
                 onPress={() => handleViewDetails(staffId)}
+                hitSlop={10}
                 className='mr-1.5 flex-1 flex-row items-center justify-center rounded-lg bg-white px-2 py-2.5'
               >
                 <MaterialCommunityIcons
@@ -367,6 +363,7 @@ export default function StaffTab({ width }: StaffTabProps) {
 
               <TouchableOpacity
                 activeOpacity={0.7}
+                hitSlop={10}
                 onPress={() =>
                   router.push({
                     pathname: '/owneraccess',
@@ -394,6 +391,7 @@ export default function StaffTab({ width }: StaffTabProps) {
               <TouchableOpacity
                 activeOpacity={0.7}
                 disabled={switchLoadingId !== null}
+                hitSlop={10}
                 onPress={() => handleToggleStatus(item, index)}
                 className='mr-1.5 flex-1 flex-row items-center justify-center rounded-lg bg-white px-1.5 py-2.5'
               >
@@ -427,6 +425,7 @@ export default function StaffTab({ width }: StaffTabProps) {
               <TouchableOpacity
                 activeOpacity={0.7}
                 onPress={() => handleDeletePress(item)}
+                hitSlop={10}
                 className='flex-1 flex-row items-center justify-center rounded-lg bg-white px-2 py-2.5'
               >
                 <MaterialCommunityIcons
@@ -495,6 +494,7 @@ export default function StaffTab({ width }: StaffTabProps) {
           <TouchableOpacity
             onPress={() => refetch()}
             activeOpacity={0.8}
+            hitSlop={10}
             className='mt-5 flex-row items-center rounded-xl bg-[#4d13af] px-5 py-3'
           >
             <MaterialCommunityIcons name='refresh' size={18} color='#fff' />
@@ -568,6 +568,7 @@ export default function StaffTab({ width }: StaffTabProps) {
           <TouchableOpacity
             activeOpacity={1}
             onPress={closeDetails}
+            hitSlop={10}
             className='absolute inset-0 bg-black/40'
           />
 
@@ -630,6 +631,7 @@ export default function StaffTab({ width }: StaffTabProps) {
                 <TouchableOpacity
                   onPress={() => details?.id && handleViewDetails(details.id)}
                   activeOpacity={0.8}
+                  hitSlop={10}
                   className='mt-5 flex-row items-center rounded-xl bg-[#4d13af] px-5 py-3'
                 >
                   <MaterialCommunityIcons

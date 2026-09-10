@@ -1,7 +1,5 @@
 import React from 'react';
-
 import { Text, TouchableOpacity, View } from 'react-native';
-
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 
 type Props = {
@@ -24,6 +22,7 @@ export default function TablesFooter({ total, lastUpdated, onRefresh }: Props) {
           activeOpacity={0.7}
           onPress={onRefresh}
           className='ml-2'
+          hitSlop={10}
         >
           <MaterialIcons name='refresh' size={18} color='#4E4860' />
         </TouchableOpacity>

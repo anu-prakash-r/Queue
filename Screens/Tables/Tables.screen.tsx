@@ -1,19 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-
-import {
-  ActivityIndicator,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
-
+import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-
 import { StatusBar } from 'expo-status-bar';
 import { router, useFocusEffect } from 'expo-router';
 import Toast from 'react-native-toast-message';
-
 import {
   useGetTablesQuery,
   useDeleteTableMutation,
@@ -26,7 +16,6 @@ import TableSummary from '@/components/Tables/TableSummary';
 import TableCard from '@/components/Tables/TableCard';
 import TablesFooter from '@/components/Tables/TablesFooter';
 import ConfirmationModal from '@/components/ConfirmationModal/ConfirmationModal';
-
 import { useAuth } from '@/contexts/AuthContext';
 import {
   TablesScreenSkeleton,
@@ -35,38 +24,27 @@ import {
 
 export default function TablesScreen() {
   const { token, isSuperAdmin, isRoleLoaded } = useAuth();
-
   const canLoad = isRoleLoaded && !isSuperAdmin;
-
   const {
     data: tablesData,
     isLoading: loading,
     error,
     refetch: fetchTables,
   } = useGetTablesQuery(undefined, { skip: !token || !canLoad });
-
   const [deleteTable, { isLoading: deleteLoading }] = useDeleteTableMutation();
-
   const tables = tablesData?.tables ?? [];
-
   const summary = {
     total_tables: tablesData?.summary?.total_tables ?? 0,
     available: tablesData?.summary?.available ?? 0,
     occupied: tablesData?.summary?.occupied ?? 0,
     reserved: tablesData?.summary?.reserved ?? 0,
   };
-
   const [search, setSearch] = useState('');
-
   const [sortAscending, setSortAscending] = useState(true);
-
   const [lastUpdated, setLastUpdated] = useState('');
   const [statusModalVisible, setStatusModalVisible] = useState(false);
-
   const [selectedTable, setSelectedTable] = useState<TableItem | null>(null);
-
   const [deleteTarget, setDeleteTarget] = useState<TableItem | null>(null);
-
   const errorText = error ? 'Unable to load tables. Please try again.' : '';
 
   useFocusEffect(
@@ -270,6 +248,7 @@ export default function TablesScreen() {
               <TouchableOpacity
                 activeOpacity={0.7}
                 onPress={() => fetchTables()}
+                hitSlop={10}
                 className='mt-5 rounded-xl bg-[#35116B] px-5 py-3'
               >
                 <Text className='text-[12px] font-semibold text-white'>
@@ -304,6 +283,7 @@ export default function TablesScreen() {
                     setSearch('');
                   }}
                   className='mt-4 rounded-xl bg-[#35116B] px-4 py-2.5'
+                  hitSlop={10}
                 >
                   <Text className='text-[12px] font-semibold text-white'>
                     Clear Search
