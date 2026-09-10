@@ -78,6 +78,7 @@ export default function TableCard({
             activeOpacity={0.8}
             onPress={handleToggle}
             className='min-h-[86px] flex-row items-center'
+            hitSlop={10}
           >
             <View className='w-[64px] items-center justify-center'>
               <View className='h-[36px] w-[42px] items-center justify-center'>
@@ -144,6 +145,7 @@ export default function TableCard({
               <View className='flex-row items-center justify-end'>
                 <TouchableOpacity
                   activeOpacity={0.7}
+                  hitSlop={10}
                   onPress={handleEdit}
                   className='px-5 py-2'
                 >
@@ -158,6 +160,7 @@ export default function TableCard({
                   activeOpacity={0.7}
                   onPress={() => onUpdate?.(table)}
                   className='px-5 py-2'
+                  hitSlop={10}
                 >
                   <Text className='text-[13px] font-semibold text-[#1468D8]'>
                     Update
@@ -169,6 +172,7 @@ export default function TableCard({
                 <TouchableOpacity
                   activeOpacity={0.7}
                   onPress={() => onDelete?.(table)}
+                  hitSlop={10}
                   className='px-5 py-2'
                 >
                   <Text className='text-[13px] font-semibold text-[#E31B23]'>

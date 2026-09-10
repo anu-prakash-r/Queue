@@ -149,6 +149,7 @@ export default function SuperAdminLoginScreen() {
               activeOpacity={0.7}
               onPress={() => router.back()}
               className='mt-3 h-11 w-11 items-center justify-center rounded-full bg-[#F4EFF7]'
+              hitSlop={10}
             >
               <MaterialIcons name='arrow-back' size={24} color='#351467' />
             </TouchableOpacity>
@@ -213,6 +214,7 @@ export default function SuperAdminLoginScreen() {
                   activeOpacity={0.7}
                   disabled={isLoggingIn}
                   onPress={() => setShowPassword(prev => !prev)}
+                  hitSlop={10}
                 >
                   <MaterialIcons
                     name={showPassword ? 'visibility' : 'visibility-off'}
@@ -227,6 +229,7 @@ export default function SuperAdminLoginScreen() {
                 disabled={isLoggingIn}
                 onPress={handleForgotPassword}
                 className='mt-3 items-end'
+                hitSlop={10}
               >
                 <Text className='text-[14px] font-semibold text-[#6C2BD9]'>
                   Forgot Password?
@@ -238,6 +241,7 @@ export default function SuperAdminLoginScreen() {
                 onPress={handleLogin}
                 disabled={isLoggingIn}
                 className='mt-6 h-[48px] flex-row items-center justify-center rounded-2xl bg-[#6C2BD9]'
+                hitSlop={10}
               >
                 {isLoggingIn ? (
                   <>

@@ -28,6 +28,7 @@ export default function TableSearch({ value, onChangeText, onFilter }: Props) {
         <TouchableOpacity
           activeOpacity={0.7}
           onPress={onFilter}
+          hitSlop={10}
           className='ml-3 h-[42px] w-[42px] items-center justify-center rounded-xl border border-[#DDD7E5] bg-white'
         >
           <Feather name='filter' size={22} color='#35116B' />

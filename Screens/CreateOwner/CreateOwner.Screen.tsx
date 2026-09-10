@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-
 import {
   ActivityIndicator,
   Alert,
@@ -10,17 +9,11 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-
 import { router, useLocalSearchParams } from 'expo-router';
-
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-
 import { SafeAreaView } from 'react-native-safe-area-context';
-
 import Toast from 'react-native-toast-message';
-
 import { useAuth } from '@/contexts/AuthContext';
-
 import {
   useGetOwnersQuery,
   useGetOwnerDetailsQuery,
@@ -30,40 +23,25 @@ import {
 
 export default function CreateOwnerScreen() {
   const { token } = useAuth();
-
   const { ownerId } = useLocalSearchParams<{
     ownerId?: string;
   }>();
-
   const { data: owners = [] } = useGetOwnersQuery(undefined, { skip: !token });
-
   const { data: ownerDetails } = useGetOwnerDetailsQuery(Number(ownerId), {
     skip: !ownerId || !token,
   });
-
   const [createOwner] = useCreateOwnerMutation();
   const [editOwner] = useEditOwnerMutation();
-
   const [name, setName] = useState('');
-
   const [mobileNumber, setMobileNumber] = useState('');
-
   const [maxRestaurants, setMaxRestaurants] = useState('');
-
   const [maxStaff, setMaxStaff] = useState('');
-
   const [maxTables, setMaxTables] = useState('');
-
   const [restaurantName, setRestaurantName] = useState('');
-
   const [city, setCity] = useState('');
-
   const [address, setAddress] = useState('');
-
   const [loading, setLoading] = useState(false);
-
   const [keyboardHeight, setKeyboardHeight] = useState(0);
-
   const [errors, setErrors] = useState({
     name: false,
     mobileNumber: false,
@@ -99,19 +77,12 @@ export default function CreateOwnerScreen() {
 
     if (owner) {
       setName(owner.name ?? '');
-
       setMobileNumber(owner.mobile_number ?? '');
-
       setMaxRestaurants(String(owner.max_restaurants ?? ''));
-
       setMaxStaff(String(owner.max_staff ?? ''));
-
       setMaxTables(String(owner.max_tables ?? ''));
-
       setRestaurantName(owner.restaurant_name ?? '');
-
       setCity(owner.city ?? '');
-
       setAddress(owner.address ?? '');
     }
   }, [ownerId, token, owners, ownerDetails]);
@@ -257,19 +228,12 @@ export default function CreateOwnerScreen() {
 
     const ownerData = {
       name: name.trim(),
-
       mobile_number: mobileNumber.trim(),
-
       max_restaurants: Number(maxRestaurants),
-
       max_staff: Number(maxStaff),
-
       max_tables: Number(maxTables),
-
       restaurant_name: restaurantName.trim(),
-
       city: city.trim(),
-
       address: address.trim(),
     };
 
@@ -290,9 +254,7 @@ export default function CreateOwnerScreen() {
       if (response.success) {
         Toast.show({
           type: 'success',
-
           text1: ownerId ? 'Owner Updated' : 'Owner Created',
-
           text2: ownerId
             ? 'Owner details updated successfully.'
             : 'New owner created successfully.',
@@ -309,9 +271,7 @@ export default function CreateOwnerScreen() {
 
       Toast.show({
         type: 'error',
-
         text1: ownerId ? 'Update Failed' : 'Creation Failed',
-
         text2:
           response.message ??
           (ownerId ? 'Failed to update owner.' : 'Failed to create owner.'),
@@ -322,11 +282,8 @@ export default function CreateOwnerScreen() {
       if (error instanceof Error) {
         Toast.show({
           type: 'error',
-
           text1: 'Something went wrong',
-
           text2: error.message,
-
           visibilityTime: 5000,
         });
 
@@ -335,11 +292,8 @@ export default function CreateOwnerScreen() {
 
       Toast.show({
         type: 'error',
-
         text1: 'Something went wrong',
-
         text2: 'Unable to save owner. Please try again.',
-
         visibilityTime: 5000,
       });
     } finally {
@@ -357,6 +311,7 @@ export default function CreateOwnerScreen() {
           activeOpacity={0.7}
           onPress={() => router.back()}
           className='mr-3 h-10 w-10 items-center justify-center rounded-xl'
+          hitSlop={10}
         >
           <MaterialIcons name='arrow-back' size={24} color='#442F52' />
         </TouchableOpacity>
@@ -739,6 +694,7 @@ export default function CreateOwnerScreen() {
             onPress={() => router.back()}
             disabled={loading}
             className='h-12 flex-1 items-center justify-center rounded-xl border border-[#DDD6E2] bg-white'
+            hitSlop={10}
           >
             <Text className='text-[14px] font-semibold text-[#5E5665]'>
               Cancel
@@ -752,6 +708,7 @@ export default function CreateOwnerScreen() {
             className={`h-12 flex-1 items-center justify-center rounded-xl ${
               loading ? 'bg-[#806C89]' : 'bg-[#442F52]'
             }`}
+            hitSlop={10}
           >
             {loading ? (
               <ActivityIndicator size='small' color='#FFFFFF' />

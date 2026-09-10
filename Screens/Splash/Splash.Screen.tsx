@@ -9,7 +9,6 @@ import {
 import * as SplashScreen from 'expo-splash-screen';
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-
 import QueueSvg from '@/assets/Svg/Queue.svg';
 import * as SecureStore from 'expo-secure-store';
 import { useAuth } from '@/contexts/AuthContext';

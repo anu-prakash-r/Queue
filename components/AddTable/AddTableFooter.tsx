@@ -17,6 +17,7 @@ export default function AddTableFooter({
           activeOpacity={0.7}
           onPress={onCancel}
           className='h-[46px] flex-1 items-center justify-center rounded-xl border border-[#35116B] bg-white'
+          hitSlop={10}
         >
           <Text className='text-[14px] font-semibold text-[#35116B]'>
             CANCEL
@@ -27,6 +28,7 @@ export default function AddTableFooter({
           activeOpacity={0.8}
           onPress={onSave}
           className='h-[46px] flex-1 items-center justify-center rounded-xl bg-[#35116B]'
+          hitSlop={10}
         >
           <Text className='text-[14px] font-semibold text-white'>
             SAVE TABLE

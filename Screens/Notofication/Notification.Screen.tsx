@@ -65,7 +65,7 @@ export default function NotificationsScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-[#F7F6FC]">
+    <SafeAreaView className='flex-1 bg-[#F7F6FC]'>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
@@ -73,13 +73,13 @@ export default function NotificationsScreen() {
           paddingBottom: 120,
         }}
       >
-        <View className="mb-5 flex-row items-center justify-between">
+        <View className='mb-5 flex-row items-center justify-between'>
           <View>
-            <Text className="text-[25px] font-bold text-[#442F52]">
+            <Text className='text-[25px] font-bold text-[#442F52]'>
               Notifications
             </Text>
 
-            <Text className="mt-1 text-[13px] text-[#777180]">
+            <Text className='mt-1 text-[13px] text-[#777180]'>
               Stay updated with your restaurant
             </Text>
           </View>
@@ -87,25 +87,27 @@ export default function NotificationsScreen() {
           <TouchableOpacity
             activeOpacity={0.7}
             onPress={handleMarkAllRead}
-            className="rounded-xl bg-[#F1EAF5] px-3 py-2"
+            className='rounded-xl bg-[#F1EAF5] px-3 py-2'
+            hitSlop={10}
           >
-            <Text className="text-[11px] font-bold text-[#442F52]">
+            <Text className='text-[11px] font-bold text-[#442F52]'>
               Mark all read
             </Text>
           </TouchableOpacity>
         </View>
 
-        <Text className="mb-3 ml-1 text-[12px] font-bold uppercase tracking-wide text-[#8D8791]">
+        <Text className='mb-3 ml-1 text-[12px] font-bold uppercase tracking-wide text-[#8D8791]'>
           Today
         </Text>
 
-        <View className="mb-6 rounded-2xl bg-white">
+        <View className='mb-6 rounded-2xl bg-white'>
           {NOTIFICATIONS.map((notification, index) => (
             <View key={notification.id}>
               <TouchableOpacity
                 activeOpacity={0.7}
                 onPress={() => handleNotificationPress(notification)}
-                className="flex-row px-4 py-4"
+                className='flex-row px-4 py-4'
+                hitSlop={10}
               >
                 <View
                   className={`h-11 w-11 items-center justify-center rounded-xl ${
@@ -119,8 +121,8 @@ export default function NotificationsScreen() {
                   />
                 </View>
 
-                <View className="ml-4 flex-1">
-                  <View className="flex-row items-center">
+                <View className='ml-4 flex-1'>
+                  <View className='flex-row items-center'>
                     <Text
                       className={`flex-1 text-[14px] ${
                         notification.unread
@@ -132,44 +134,44 @@ export default function NotificationsScreen() {
                     </Text>
 
                     {notification.unread && (
-                      <View className="ml-2 h-2 w-2 rounded-full bg-[#4D13AF]" />
+                      <View className='ml-2 h-2 w-2 rounded-full bg-[#4D13AF]' />
                     )}
                   </View>
 
                   <Text
                     numberOfLines={2}
-                    className="mt-1 text-[12px] leading-[18px] text-[#88818D]"
+                    className='mt-1 text-[12px] leading-[18px] text-[#88818D]'
                   >
                     {notification.message}
                   </Text>
 
-                  <Text className="mt-2 text-[10px] font-medium text-[#AAA4AE]">
+                  <Text className='mt-2 text-[10px] font-medium text-[#AAA4AE]'>
                     {notification.time}
                   </Text>
                 </View>
               </TouchableOpacity>
 
               {index < NOTIFICATIONS.length - 1 && (
-                <View className="ml-[76px] h-[1px] bg-[#F0EDF2]" />
+                <View className='ml-[76px] h-[1px] bg-[#F0EDF2]' />
               )}
             </View>
           ))}
         </View>
 
-        <View className="items-center py-5">
-          <View className="mb-3 h-12 w-12 items-center justify-center rounded-full bg-[#F1EAF5]">
+        <View className='items-center py-5'>
+          <View className='mb-3 h-12 w-12 items-center justify-center rounded-full bg-[#F1EAF5]'>
             <MaterialIcons
-              name="notifications-none"
+              name='notifications-none'
               size={25}
-              color="#442F52"
+              color='#442F52'
             />
           </View>
 
-          <Text className="text-[13px] font-semibold text-[#777180]">
+          <Text className='text-[13px] font-semibold text-[#777180]'>
             You're all caught up
           </Text>
 
-          <Text className="mt-1 text-center text-[11px] text-[#AAA4AE]">
+          <Text className='mt-1 text-center text-[11px] text-[#AAA4AE]'>
             New restaurant updates will appear here.
           </Text>
         </View>

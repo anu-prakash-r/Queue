@@ -1,8 +1,6 @@
 import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
-
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import Entypo from '@expo/vector-icons/Entypo';
 import AntDesign from '@expo/vector-icons/AntDesign';
 
 type AppHeaderProps = {
@@ -25,6 +23,7 @@ export default function AppHeader({
           onPress={onMenuPress}
           activeOpacity={0.7}
           className='mr-4 h-10 w-10 items-center justify-center rounded-xl'
+          hitSlop={10}
         >
           <AntDesign name='menu' size={26} color='#442F52' />
         </TouchableOpacity>
@@ -44,6 +43,7 @@ export default function AppHeader({
         onPress={onNotificationPress}
         activeOpacity={0.7}
         className='relative h-11 w-11 items-center justify-center rounded-full'
+        hitSlop={10}
       >
         <MaterialIcons name='notifications-none' size={27} color='#442F52' />
 

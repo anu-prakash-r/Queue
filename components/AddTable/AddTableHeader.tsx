@@ -10,7 +10,12 @@ export default function AddTableHeader({ onBack }: AddTableHeaderProps) {
   return (
     <View className='bg-[#35116B] px-5 pb-5 pt-12'>
       <View className='flex-row items-center'>
-        <TouchableOpacity activeOpacity={0.7} onPress={onBack} className='mr-5'>
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={onBack}
+          className='mr-5'
+          hitSlop={10}
+        >
           <MaterialIcons name='arrow-back' size={24} color='#FFFFFF' />
         </TouchableOpacity>
 

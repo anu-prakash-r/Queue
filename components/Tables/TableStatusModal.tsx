@@ -8,9 +8,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-
 import { TableItem, useUpdateTableStatusMutation } from '@/store/api/tableApi';
 
 type TableStatus = 'available' | 'occupied' | 'reserved' | 'maintenance';
@@ -177,6 +175,7 @@ export default function TableStatusModal({
               activeOpacity={0.7}
               onPress={handleCancel}
               disabled={loading}
+              hitSlop={10}
               className='h-9 w-9 items-center justify-center rounded-full bg-[#F4F2F6]'
             >
               <MaterialIcons name='close' size={21} color='#302B47' />
@@ -228,6 +227,7 @@ export default function TableStatusModal({
               return (
                 <TouchableOpacity
                   key={status}
+                  hitSlop={10}
                   activeOpacity={0.8}
                   disabled={loading}
                   onPress={() => handleSelectStatus(status)}
@@ -297,6 +297,7 @@ export default function TableStatusModal({
               activeOpacity={0.8}
               onPress={handleCancel}
               disabled={loading}
+              hitSlop={10}
               className='mr-2 h-[48px] flex-1 items-center justify-center rounded-xl border border-[#D9D4DF] bg-white'
             >
               <Text className='text-[14px] font-semibold text-[#302B47]'>
@@ -307,6 +308,7 @@ export default function TableStatusModal({
             <TouchableOpacity
               activeOpacity={0.8}
               onPress={handleUpdate}
+              hitSlop={10}
               disabled={loading}
               className='ml-2 h-[48px] flex-1 items-center justify-center rounded-xl bg-[#35116B]'
             >

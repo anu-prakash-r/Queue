@@ -46,6 +46,7 @@ export default function OnboardingScreen() {
               activeOpacity={0.8}
               onPress={handleLogin}
               className='h-[50px] flex-1 items-center justify-center rounded-xl bg-[#17175C]'
+              hitSlop={10}
             >
               <View className='flex-row items-center'>
                 <MaterialIcons name='login' size={21} color='#FFFFFF' />
@@ -85,6 +86,7 @@ export default function OnboardingScreen() {
             activeOpacity={0.8}
             onPress={handleSuperAdminLogin}
             className='mt-3 h-[50px] w-full flex-row items-center justify-center rounded-xl border border-[#17175C] bg-white'
+            hitSlop={10}
           >
             <View className='h-8 w-8 items-center justify-center rounded-2xl bg-[#F1EAFE]'>
               <MaterialIcons

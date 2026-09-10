@@ -1,5 +1,4 @@
 import React from 'react';
-
 import {
   ActivityIndicator,
   Modal,
@@ -9,9 +8,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-
 import type { QueueItem } from '@/components/Queue/types';
 import type { TableItem } from '@/store/api/tableApi';
 
@@ -40,9 +37,10 @@ export default function AssignTableModal({
   onConfirm,
   onCancel,
 }: AssignTableModalProps) {
-const availableTables = tables.filter(table => {
+  const availableTables = tables.filter(table => {
     if (table.status?.trim().toLowerCase() !== 'available') return false;
-    if (item && item.people > 0 && table.seating_capacity < item.people) return false;
+    if (item && item.people > 0 && table.seating_capacity < item.people)
+      return false;
     return true;
   });
   const isTableSelected = (table: TableItem): boolean =>
@@ -78,6 +76,7 @@ const availableTables = tables.filter(table => {
               className='h-8 w-8 items-center justify-center'
               activeOpacity={0.7}
               onPress={onCancel}
+              hitSlop={10}
             >
               <MaterialIcons name='close' size={24} color='#777180' />
             </TouchableOpacity>
@@ -129,6 +128,7 @@ const availableTables = tables.filter(table => {
                           ? 'border-[#2E7D32] bg-[#E8F5E9]'
                           : 'border-[#E9E2ED] bg-white'
                       }`}
+                      hitSlop={10}
                     >
                       <View className='flex-1 pr-3'>
                         <Text
@@ -171,6 +171,7 @@ const availableTables = tables.filter(table => {
               disabled={submitting}
               onPress={onCancel}
               className='h-12 flex-1 items-center justify-center rounded-xl border border-[#35116B] bg-white'
+              hitSlop={10}
             >
               <Text className='text-[14px] font-semibold text-[#35116B]'>
                 CANCEL
@@ -179,13 +180,20 @@ const availableTables = tables.filter(table => {
 
             <TouchableOpacity
               activeOpacity={0.8}
-              disabled={submitting || availableTables.length === 0 || !tableNumber.trim()}
+              disabled={
+                submitting ||
+                availableTables.length === 0 ||
+                !tableNumber.trim()
+              }
               onPress={onConfirm}
               className={`h-12 flex-1 items-center justify-center rounded-xl ${
-                submitting || availableTables.length === 0 || !tableNumber.trim()
+                submitting ||
+                availableTables.length === 0 ||
+                !tableNumber.trim()
                   ? 'bg-[#A894B5]'
                   : 'bg-[#35116B]'
               }`}
+              hitSlop={10}
             >
               {submitting ? (
                 <ActivityIndicator size='small' color='#FFFFFF' />

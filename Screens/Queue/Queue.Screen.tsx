@@ -441,6 +441,7 @@ export default function QueueScreen() {
           className='absolute right-5 top-2 h-[40px] w-[40px] items-center justify-center rounded-xl'
           activeOpacity={0.8}
           onPress={() => router.push('/addqueue')}
+          hitSlop={10}
         >
           <MaterialIcons name='person-add-alt-1' size={22} color='#4B197C' />
         </TouchableOpacity>
@@ -468,6 +469,7 @@ export default function QueueScreen() {
               className='mt-4 rounded-xl bg-[#4B197C] px-6 py-2.5'
               activeOpacity={0.8}
               onPress={() => refetchQueues()}
+              hitSlop={10}
             >
               <Text className='text-[13px] font-bold text-white'>RETRY</Text>
             </TouchableOpacity>

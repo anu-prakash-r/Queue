@@ -74,6 +74,7 @@ export default function EditQueueModal({
               onPress={onCancel}
               disabled={loading}
               className='ml-3 h-10 w-10 items-center justify-center rounded-full bg-[#F6F2F8]'
+              hitSlop={10}
             >
               <MaterialIcons name='close' size={22} color='#777180' />
             </TouchableOpacity>
@@ -90,6 +91,7 @@ export default function EditQueueModal({
                 activeOpacity={0.7}
                 onPress={onDecrease}
                 disabled={loading}
+                hitSlop={10}
                 className='w-[54px] items-center justify-center border-r border-[#D8D2E2]'
               >
                 <Entypo name='minus' size={22} color='#35116B' />
@@ -109,6 +111,7 @@ export default function EditQueueModal({
                 activeOpacity={0.7}
                 onPress={onIncrease}
                 disabled={loading}
+                hitSlop={10}
                 className='w-[54px] items-center justify-center border-l border-[#D8D2E2]'
               >
                 <Entypo name='plus' size={22} color='#35116B' />
@@ -120,6 +123,7 @@ export default function EditQueueModal({
             <TouchableOpacity
               activeOpacity={0.7}
               disabled={loading}
+              hitSlop={10}
               onPress={onCancel}
               className='h-[52px] flex-1 items-center justify-center rounded-xl border border-[#35116B] bg-white'
             >
@@ -131,6 +135,7 @@ export default function EditQueueModal({
             <TouchableOpacity
               activeOpacity={0.8}
               disabled={loading}
+              hitSlop={10}
               onPress={onConfirm}
               className='h-[52px] flex-1 items-center justify-center rounded-xl bg-[#35116B]'
             >

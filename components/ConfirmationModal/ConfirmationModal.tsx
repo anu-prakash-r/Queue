@@ -78,6 +78,7 @@ export default function ConfirmationModal({
               disabled={loading}
               onPress={onCancel}
               className='h-12 flex-1 items-center justify-center rounded-xl border border-[#DDD6E2] bg-white'
+              hitSlop={10}
             >
               <Text className='text-[14px] font-semibold text-[#5E5665]'>
                 {cancelText}
@@ -91,6 +92,7 @@ export default function ConfirmationModal({
               className={`h-12 flex-1 items-center justify-center rounded-xl ${
                 destructive ? 'bg-[#D64545]' : 'bg-[#442F52]'
               } ${loading ? 'opacity-60' : 'opacity-100'}`}
+              hitSlop={10}
             >
               {loading ? (
                 <ActivityIndicator size='small' color='#FFFFFF' />

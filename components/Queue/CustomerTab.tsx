@@ -1,5 +1,4 @@
 import React, { useCallback, useState } from 'react';
-
 import {
   ActivityIndicator,
   FlatList,
@@ -10,12 +9,9 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
-
 import { useGetCustomersQuery, CustomerItem } from '@/store/api/customerApi';
-
 import { useAuth } from '@/contexts/AuthContext';
 
 type CustomerTabProps = {
@@ -36,13 +32,9 @@ export default function CustomerTab({ width }: CustomerTabProps) {
     error,
     refetch,
   } = useGetCustomersQuery(undefined, { skip: !token });
-
   const [refreshing, setRefreshing] = useState(false);
-
   const [expandedId, setExpandedId] = useState<number | string | null>(null);
-
   const [detailsItem, setDetailsItem] = useState<CustomerItem | null>(null);
-
   const errorText = error ? 'Unable to load. Please try again.' : null;
 
   useFocusEffect(
@@ -83,7 +75,6 @@ export default function CustomerTab({ width }: CustomerTabProps) {
     index: number;
   }) => {
     const customerId = item.id ?? index;
-
     const isExpanded = expandedId === customerId;
 
     return (
@@ -92,6 +83,7 @@ export default function CustomerTab({ width }: CustomerTabProps) {
           activeOpacity={0.75}
           onPress={() => toggleExpanded(customerId)}
           className='px-4 py-4'
+          hitSlop={10}
         >
           <View className='flex-row items-center'>
             <View className='h-12 w-12 items-center justify-center rounded-full bg-[#F4F0FF]'>
@@ -171,6 +163,7 @@ export default function CustomerTab({ width }: CustomerTabProps) {
                 activeOpacity={0.7}
                 onPress={() => setDetailsItem(item)}
                 className='mr-1.5 flex-1 flex-row items-center justify-center rounded-lg bg-white px-2 py-2.5'
+                hitSlop={10}
               >
                 <MaterialCommunityIcons
                   name='eye-outline'
@@ -196,6 +189,7 @@ export default function CustomerTab({ width }: CustomerTabProps) {
                     },
                   })
                 }
+                hitSlop={10}
                 className='flex-1 flex-row items-center justify-center rounded-lg bg-white px-2 py-2.5'
               >
                 <MaterialCommunityIcons
@@ -273,6 +267,7 @@ export default function CustomerTab({ width }: CustomerTabProps) {
             onPress={() => refetch()}
             activeOpacity={0.8}
             className='mt-5 flex-row items-center rounded-xl bg-[#4d13af] px-5 py-3'
+            hitSlop={10}
           >
             <MaterialCommunityIcons name='refresh' size={18} color='#fff' />
 
@@ -333,6 +328,7 @@ export default function CustomerTab({ width }: CustomerTabProps) {
             activeOpacity={1}
             onPress={() => setDetailsItem(null)}
             className='absolute inset-0 bg-black/40'
+            hitSlop={10}
           />
 
           <View className='max-h-[88%] overflow-hidden rounded-t-[30px] bg-white'>

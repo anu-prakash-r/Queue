@@ -1,5 +1,4 @@
 import React from 'react';
-
 import {
   ActivityIndicator,
   Alert,
@@ -8,11 +7,9 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-
 import { useGetProfileQuery } from '@/store/api/authApi';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -139,6 +136,7 @@ export default function ProfileScreen() {
                     activeOpacity={0.7}
                     onPress={handleCreateOwner}
                     className='h-10 w-10 items-center justify-center rounded-xl bg-[#F1EAF5]'
+                    hitSlop={10}
                   >
                     <MaterialIcons name='add' size={20} color='#442F52' />
                   </TouchableOpacity>
@@ -147,6 +145,7 @@ export default function ProfileScreen() {
                     activeOpacity={0.7}
                     onPress={handleEditProfile}
                     className='h-10 w-10 items-center justify-center rounded-xl bg-[#F1EAF5]'
+                    hitSlop={10}
                   >
                     <MaterialIcons name='edit' size={20} color='#442F52' />
                   </TouchableOpacity>
@@ -250,6 +249,7 @@ export default function ProfileScreen() {
                   activeOpacity={0.7}
                   onPress={handleOwnerList}
                   className='flex-row items-center px-4 py-4'
+                  hitSlop={10}
                 >
                   <View className='h-11 w-11 items-center justify-center rounded-xl bg-[#F1EAF5]'>
                     <MaterialIcons
@@ -286,6 +286,7 @@ export default function ProfileScreen() {
           activeOpacity={0.7}
           onPress={handleLogout}
           className='flex-row items-center justify-center rounded-2xl bg-[#FFF3F2] py-4'
+          hitSlop={10}
         >
           <MaterialIcons name='logout' size={21} color='#C0392B' />
 

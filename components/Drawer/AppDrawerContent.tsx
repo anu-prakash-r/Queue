@@ -6,17 +6,14 @@ import {
   Manage,
   Owners,
 } from '@/assets/Svg/NavBar';
-
 import {
   DrawerContentComponentProps,
   DrawerContentScrollView,
   DrawerItem,
 } from '@react-navigation/drawer';
-
 import { router, usePathname } from 'expo-router';
 import React from 'react';
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserProfile } from '@/hooks/useUserProfile';
@@ -69,13 +66,15 @@ const DRAWER_ITEMS = [
 export default function AppDrawerContent(props: DrawerContentComponentProps) {
   const pathname = usePathname();
   const { logout, isSuperAdmin, isOwner } = useAuth();
-
   const { name, restaurant } = useUserProfile();
-
   const drawerItems = isSuperAdmin
-    ? DRAWER_ITEMS.filter(item => item.match === 'owners' || item.match === 'profile')
+    ? DRAWER_ITEMS.filter(
+        item => item.match === 'owners' || item.match === 'profile',
+      )
     : isOwner
-      ? DRAWER_ITEMS.filter(item => item.match !== 'owners' && item.match !== 'profile')
+      ? DRAWER_ITEMS.filter(
+          item => item.match !== 'owners' && item.match !== 'profile',
+        )
       : DRAWER_ITEMS.filter(
           item =>
             item.match === 'home' ||
@@ -115,9 +114,7 @@ export default function AppDrawerContent(props: DrawerContentComponentProps) {
 
         <View style={styles.headerText}>
           <Text style={styles.brand}>{name || 'Queue'}</Text>
-          <Text style={styles.subtitle}>
-            {restaurant || 'Your Restaurant'}
-          </Text>
+          <Text style={styles.subtitle}>{restaurant || 'Your Restaurant'}</Text>
         </View>
       </View>
 
@@ -177,6 +174,7 @@ export default function AppDrawerContent(props: DrawerContentComponentProps) {
           activeOpacity={0.7}
           onPress={handleLogout}
           style={styles.logoutButton}
+          hitSlop={10}
         >
           <View style={styles.logoutIcon}>
             <MaterialIcons name='logout' size={23} color='#C0392B' />

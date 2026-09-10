@@ -3,7 +3,6 @@ import { Text, View } from 'react-native';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 import { useFocusEffect } from 'expo-router';
-
 import { useAuth } from '@/contexts/AuthContext';
 import { useGetQueuesQuery } from '@/store/api/queueApi';
 import { useGetTablesQuery } from '@/store/api/tableApi';

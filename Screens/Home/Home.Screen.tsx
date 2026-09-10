@@ -1,15 +1,12 @@
 import { View, ScrollView } from 'react-native';
 import React from 'react';
 import { StatusBar } from 'expo-status-bar';
-
 import AppHeader from '@/components/Header/Header';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import QueueStats from '@/components/Status/Status';
 import TodaysQueue from '@/components/Status/TodayQueue';
-
 import { router, useNavigation } from 'expo-router';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
-
 import { HomeQueueSvg } from '@/assets/Svg';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { openWhatsAppChat, makeWhatsAppCall } from '@/services/contact';

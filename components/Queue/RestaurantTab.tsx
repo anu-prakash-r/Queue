@@ -257,6 +257,7 @@ export default function RestaurantTab({ width }: RestaurantTabProps) {
         <TouchableOpacity
           activeOpacity={0.75}
           onPress={() => toggleExpanded(restaurantId)}
+          hitSlop={10}
           className='px-4 py-4'
         >
           <View className='flex-row items-center'>
@@ -321,6 +322,7 @@ export default function RestaurantTab({ width }: RestaurantTabProps) {
           <View className='border-t border-[#F0EDF2] bg-[#FAF9FB] px-3 py-2.5'>
             <View className='flex-row items-center'>
               <TouchableOpacity
+                hitSlop={10}
                 activeOpacity={0.7}
                 onPress={() => handleViewDetails(restaurantId)}
                 className='mr-1.5 flex-1 flex-row items-center justify-center rounded-lg bg-white px-2 py-2.5'
@@ -338,6 +340,7 @@ export default function RestaurantTab({ width }: RestaurantTabProps) {
 
               <TouchableOpacity
                 activeOpacity={0.7}
+                hitSlop={10}
                 onPress={() =>
                   router.push({
                     pathname: '/owneraccess',
@@ -365,6 +368,7 @@ export default function RestaurantTab({ width }: RestaurantTabProps) {
               <TouchableOpacity
                 activeOpacity={0.7}
                 disabled={switchLoadingId !== null}
+                hitSlop={10}
                 onPress={() => handleToggleStatus(item, index)}
                 className='mr-1.5 flex-1 flex-row items-center justify-center rounded-lg bg-white px-1.5 py-2.5'
               >
@@ -392,6 +396,7 @@ export default function RestaurantTab({ width }: RestaurantTabProps) {
 
               <TouchableOpacity
                 activeOpacity={0.7}
+                hitSlop={10}
                 onPress={() => handleDeletePress(item)}
                 className='flex-1 flex-row items-center justify-center rounded-lg bg-white px-2 py-2.5'
               >
@@ -462,6 +467,7 @@ export default function RestaurantTab({ width }: RestaurantTabProps) {
           <TouchableOpacity
             onPress={() => refetch()}
             activeOpacity={0.8}
+            hitSlop={10}
             className='mt-4 flex-row items-center rounded-xl bg-[#4d13af] px-5 py-3'
           >
             <MaterialCommunityIcons name='refresh' size={17} color='#fff' />
@@ -542,6 +548,7 @@ export default function RestaurantTab({ width }: RestaurantTabProps) {
           <TouchableOpacity
             activeOpacity={1}
             onPress={closeDetails}
+            hitSlop={10}
             className='absolute inset-0 bg-black/40'
           />
 
@@ -609,6 +616,7 @@ export default function RestaurantTab({ width }: RestaurantTabProps) {
                   onPress={() => details?.id && handleViewDetails(details.id)}
                   activeOpacity={0.8}
                   className='mt-5 flex-row items-center rounded-xl bg-[#4d13af] px-5 py-3'
+                  hitSlop={10}
                 >
                   <MaterialCommunityIcons
                     name='refresh'
