@@ -18,15 +18,14 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { router } from 'expo-router';
 import Toast from 'react-native-toast-message';
 
-import { ApiError } from '@/services/api';
 import { useAuth } from '@/contexts/AuthContext';
 
 import {
-  getOwners,
+  useGetOwnersQuery,
+  useDeleteOwnerMutation,
+  useToggleOwnerActiveMutation,
   Owner,
-  deleteOwner,
-  toggleOwnerActive,
-} from '@/services/ownerApi';
+} from '@/store/api/ownerApi';
 
 import ConfirmationModal from '@/components/ConfirmationModal/ConfirmationModal';
 import OwnerListSkeleton from '@/components/SkeletonLoader/Skeleton.OwnerList';
@@ -38,14 +37,29 @@ type MenuPosition = {
   right: number;
 };
 
-export default function OwnerListScreen() {
-  const { token } = useAuth();
+type OwnerListScreenProps = {
+  showBack?: boolean;
+  bottomSafeArea?: boolean;
+};
 
-  const [owners, setOwners] = useState<Owner[]>([]);
+export default function OwnerListScreen({
+  showBack = true,
+  bottomSafeArea = true,
+}: OwnerListScreenProps) {
+  const { token, isSuperAdmin, isRoleLoaded } = useAuth();
+
+  const canLoad = isRoleLoaded && isSuperAdmin;
+
+  const {
+    data: owners = [],
+    isLoading: loading,
+    refetch: fetchOwners,
+  } = useGetOwnersQuery(undefined, { skip: !token || !canLoad });
+
+  const [deleteOwner] = useDeleteOwnerMutation();
+  const [toggleOwnerActive] = useToggleOwnerActiveMutation();
+
   const [search, setSearch] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
 
   const [menuPosition, setMenuPosition] = useState<MenuPosition>({
@@ -61,63 +75,12 @@ export default function OwnerListScreen() {
 
   const [deleteLoading, setDeleteLoading] = useState(false);
 
-  const fetchOwners = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const response = await getOwners(token ?? '');
-
-      if (response.success && response.data) {
-        setOwners(response.data);
-      } else {
-        const message = response.message ?? 'Failed to load owners.';
-
-        setError(message);
-
-        Toast.show({
-          type: 'error',
-          text1: 'Unable to Load Owners',
-          text2: message,
-          visibilityTime: 4000,
-        });
-      }
-    } catch (error: unknown) {
-      console.log('=================================');
-      console.log('GET OWNERS ERROR');
-      console.log('=================================');
-
-      let message = 'Network error while fetching owners.';
-
-      if (error instanceof ApiError) {
-        console.log('API STATUS:', error.status);
-        console.log('API MESSAGE:', error.message);
-        console.log('API DATA:', error.data);
-
-        message = error.message;
-      } else if (error instanceof Error) {
-        message = error.message;
-      }
-
-      setError(message);
-
-      Toast.show({
-        type: 'error',
-        text1: 'Unable to Load Owners',
-        text2: message,
-        visibilityTime: 4000,
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [token]);
-
   useFocusEffect(
     useCallback(() => {
-      if (token) {
+      if (token && canLoad) {
         fetchOwners();
       }
-    }, [token, fetchOwners]),
+    }, [token, canLoad, fetchOwners]),
   );
 
   useEffect(() => {
@@ -185,20 +148,9 @@ export default function OwnerListScreen() {
     const newStatus = owner.is_active ? 'inactive' : 'active';
 
     try {
-      const response = await toggleOwnerActive(owner.id, token ?? '');
+      const response = await toggleOwnerActive(owner.id).unwrap();
 
       if (response.success) {
-        setOwners(prev =>
-          prev.map(o =>
-            o.id === owner.id
-              ? {
-                  ...o,
-                  is_active: !o.is_active,
-                }
-              : o,
-          ),
-        );
-
         Toast.show({
           type: 'success',
           text1: owner.is_active ? 'Owner Deactivated' : 'Owner Activated',
@@ -216,19 +168,9 @@ export default function OwnerListScreen() {
         });
       }
     } catch (error: unknown) {
-      console.log('=================================');
-      console.log('TOGGLE OWNER ERROR');
-      console.log('=================================');
-
       let message = 'Network error while changing owner status.';
 
-      if (error instanceof ApiError) {
-        console.log('API STATUS:', error.status);
-        console.log('API MESSAGE:', error.message);
-        console.log('API DATA:', error.data);
-
-        message = error.message;
-      } else if (error instanceof Error) {
+      if (error instanceof Error) {
         message = error.message;
       }
 
@@ -258,11 +200,9 @@ export default function OwnerListScreen() {
     try {
       setDeleteLoading(true);
 
-      const response = await deleteOwner(ownerId, token ?? '');
+      const response = await deleteOwner(ownerId).unwrap();
 
       if (response.success) {
-        setOwners(prev => prev.filter(owner => owner.id !== ownerId));
-
         Toast.show({
           type: 'success',
           text1: 'Owner Deleted',
@@ -282,19 +222,9 @@ export default function OwnerListScreen() {
         });
       }
     } catch (error: unknown) {
-      console.log('=================================');
-      console.log('DELETE OWNER ERROR');
-      console.log('=================================');
-
       let message = 'Network error while deleting owner.';
 
-      if (error instanceof ApiError) {
-        console.log('API STATUS:', error.status);
-        console.log('API MESSAGE:', error.message);
-        console.log('API DATA:', error.data);
-
-        message = error.message;
-      } else if (error instanceof Error) {
+      if (error instanceof Error) {
         message = error.message;
       }
 
@@ -497,24 +427,30 @@ export default function OwnerListScreen() {
 
   return (
     <SafeAreaView
-      edges={['top', 'left', 'right', 'bottom']}
+      edges={
+        bottomSafeArea
+          ? ['top', 'left', 'right', 'bottom']
+          : ['top', 'left', 'right']
+      }
       className='flex-1 bg-[#F8F6F9]'
     >
       <View className='px-5 pb-5 pt-4'>
         <View className='flex-row items-center justify-between'>
           <View className='flex-row items-center'>
-            <TouchableOpacity
-              activeOpacity={0.7}
-              onPress={() => {
-                closeMenu();
-                router.back();
-              }}
-              className='h-10 w-10 items-center justify-center rounded-xl bg-white'
-            >
-              <MaterialIcons name='arrow-back' size={21} color='#442F52' />
-            </TouchableOpacity>
+            {showBack && (
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={() => {
+                  closeMenu();
+                  router.back();
+                }}
+                className='h-10 w-10 items-center justify-center rounded-xl bg-white'
+              >
+                <MaterialIcons name='arrow-back' size={21} color='#442F52' />
+              </TouchableOpacity>
+            )}
 
-            <View className='ml-3'>
+            <View className={showBack ? 'ml-3' : ''}>
               <Text className='text-[21px] font-bold text-[#442F52]'>
                 Owner List
               </Text>

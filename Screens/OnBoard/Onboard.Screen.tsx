@@ -56,7 +56,7 @@ export default function OnboardingScreen() {
               </View>
             </TouchableOpacity>
 
-            <TouchableOpacity
+            {/* <TouchableOpacity
               activeOpacity={0.8}
               onPress={handleRegister}
               className='h-[50px] flex-1 items-center justify-center rounded-xl bg-[#17175C]'
@@ -68,7 +68,7 @@ export default function OnboardingScreen() {
 
                 <MaterialIcons name='person-add' size={21} color='#FFFFFF' />
               </View>
-            </TouchableOpacity>
+            </TouchableOpacity> */}
           </View>
 
           <View className='mt-5 flex-row items-center'>

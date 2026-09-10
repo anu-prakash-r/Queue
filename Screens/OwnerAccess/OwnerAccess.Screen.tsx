@@ -1,5 +1,5 @@
-import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { router, useLocalSearchParams } from 'expo-router';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Keyboard,
@@ -15,15 +15,19 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import Toast from 'react-native-toast-message';
-import { useAuth } from '@/contexts/AuthContext';
-import { createRestaurant, updateRestaurant } from '@/services/restaurantApi';
 import {
-  createCustomer,
-  getCustomers,
-  CustomerItem,
-  updateCustomer,
-} from '@/services/customerApi';
-import { createStaff, updateStaff } from '@/services/staffApi';
+  useCreateRestaurantMutation,
+  useUpdateRestaurantMutation,
+} from '@/store/api/restaurantApi';
+import {
+  useCreateCustomerMutation,
+  useGetCustomersQuery,
+  useUpdateCustomerMutation,
+} from '@/store/api/customerApi';
+import {
+  useCreateStaffMutation,
+  useUpdateStaffMutation,
+} from '@/store/api/staffApi';
 
 const TABS = ['Restaurant', 'Staff', 'Customer'] as const;
 
@@ -66,8 +70,6 @@ const isValidTime = (value: string): boolean => {
 };
 
 export default function OwnerAccessScreen() {
-  const { token } = useAuth();
-
   const { tab, mode, id, restaurant, staff, customer } = useLocalSearchParams<{
     tab?: string;
     mode?: string;
@@ -119,9 +121,19 @@ export default function OwnerAccessScreen() {
   const [customerEmail, setCustomerEmail] = useState('');
   const [customerNotes, setCustomerNotes] = useState('');
 
-  const [customers, setCustomers] = useState<CustomerItem[]>([]);
-  const [customersLoading, setCustomersLoading] = useState(false);
-  const [customersError, setCustomersError] = useState<string | null>(null);
+  const [createRestaurant] = useCreateRestaurantMutation();
+  const [updateRestaurant] = useUpdateRestaurantMutation();
+
+  const [createStaff] = useCreateStaffMutation();
+  const [updateStaff] = useUpdateStaffMutation();
+
+  const [createCustomer] = useCreateCustomerMutation();
+  const [updateCustomer] = useUpdateCustomerMutation();
+
+  const { refetch: refetchCustomers, isLoading: customersLoading } =
+    useGetCustomersQuery(undefined, {
+      skip: activeTab !== 'Customer',
+    });
 
   useEffect(() => {
     if (!isEditMode || !restaurant) {
@@ -280,11 +292,6 @@ export default function OwnerAccessScreen() {
 
     Keyboard.dismiss();
 
-    if (!token) {
-      showToast('error', 'Authentication required', 'Please login again.');
-      return;
-    }
-
     const payload = {
       name: restaurantName.trim(),
       city: city.trim(),
@@ -320,7 +327,7 @@ export default function OwnerAccessScreen() {
       setSubmitting(true);
 
       if (isEditMode && id) {
-        const response = await updateRestaurant(id, token, payload);
+        const response = await updateRestaurant({ id, payload }).unwrap();
 
         const failed = Boolean(response && response.success === false);
 
@@ -347,7 +354,7 @@ export default function OwnerAccessScreen() {
         return;
       }
 
-      const response = await createRestaurant(token, payload);
+      const response = await createRestaurant(payload).unwrap();
 
       const failed = Boolean(response && response.success === false);
 
@@ -363,6 +370,8 @@ export default function OwnerAccessScreen() {
         setAddress('');
         setOpeningTime('10:00');
         setClosingTime('23:00');
+
+        router.back();
       } else {
         showToast(
           'error',
@@ -390,15 +399,10 @@ export default function OwnerAccessScreen() {
 
     Keyboard.dismiss();
 
-    if (!token) {
-      showToast('error', 'Authentication required', 'Please login again.');
-      return;
-    }
-
     const payload = {
       name: staffName.trim(),
       mobile_number: mobileNumber.trim(),
-      role: role.trim(),
+      role: role.trim().toLowerCase(),
     };
 
     if (!payload.name || payload.mobile_number.length !== 10 || !payload.role) {
@@ -414,7 +418,7 @@ export default function OwnerAccessScreen() {
       setSubmitting(true);
 
       if (isStaffEditMode && id) {
-        const response = await updateStaff(id, token, payload);
+        const response = await updateStaff({ id, payload }).unwrap();
 
         const failed = Boolean(response && response.success === false);
 
@@ -441,7 +445,7 @@ export default function OwnerAccessScreen() {
         return;
       }
 
-      const response = await createStaff(token, payload);
+      const response = await createStaff(payload).unwrap();
 
       const failed = Boolean(response && response.success === false);
 
@@ -455,6 +459,8 @@ export default function OwnerAccessScreen() {
         setStaffName('');
         setMobileNumber('');
         setRole('');
+
+        router.back();
       } else {
         showToast(
           'error',
@@ -482,11 +488,6 @@ export default function OwnerAccessScreen() {
 
     Keyboard.dismiss();
 
-    if (!token) {
-      showToast('error', 'Authentication required', 'Please login again.');
-      return;
-    }
-
     const payload = {
       name: customerName.trim(),
       mobile_number: customerMobileNumber.trim(),
@@ -507,7 +508,7 @@ export default function OwnerAccessScreen() {
       setSubmitting(true);
 
       if (isCustomerEditMode && id) {
-        const response = await updateCustomer(id, token, payload);
+        const response = await updateCustomer({ id, payload }).unwrap();
 
         const failed = Boolean(response && response.success === false);
 
@@ -534,7 +535,7 @@ export default function OwnerAccessScreen() {
         return;
       }
 
-      const response = await createCustomer(token, payload);
+      const response = await createCustomer(payload).unwrap();
 
       const failed = Boolean(response && response.success === false);
 
@@ -550,7 +551,9 @@ export default function OwnerAccessScreen() {
         setCustomerEmail('');
         setCustomerNotes('');
 
-        fetchCustomers();
+        refetchCustomers();
+
+        router.back();
       } else {
         showToast(
           'error',
@@ -570,35 +573,6 @@ export default function OwnerAccessScreen() {
       setSubmitting(false);
     }
   };
-
-  const fetchCustomers = useCallback(async () => {
-    if (!token) {
-      return;
-    }
-
-    try {
-      setCustomersLoading(true);
-      setCustomersError(null);
-
-      const result = await getCustomers(token);
-
-      setCustomers(Array.isArray(result) ? result : []);
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Network error.';
-
-      setCustomersError(message);
-    } finally {
-      setCustomersLoading(false);
-    }
-  }, [token]);
-
-  useFocusEffect(
-    useCallback(() => {
-      if (activeTab === 'Customer' && token) {
-        fetchCustomers();
-      }
-    }, [activeTab, token, fetchCustomers]),
-  );
 
   const handleBackPress = () => {
     Keyboard.dismiss();
@@ -922,7 +896,7 @@ export default function OwnerAccessScreen() {
               refreshControl={
                 <RefreshControl
                   refreshing={customersLoading}
-                  onRefresh={fetchCustomers}
+                  onRefresh={refetchCustomers}
                 />
               }
             >

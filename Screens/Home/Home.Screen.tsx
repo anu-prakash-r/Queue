@@ -1,5 +1,6 @@
 import { View, ScrollView } from 'react-native';
 import React from 'react';
+import { StatusBar } from 'expo-status-bar';
 
 import AppHeader from '@/components/Header/Header';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -11,6 +12,7 @@ import { DrawerNavigationProp } from '@react-navigation/drawer';
 
 import { HomeQueueSvg } from '@/assets/Svg';
 import { useUserProfile } from '@/hooks/useUserProfile';
+import { openWhatsAppChat, makeWhatsAppCall } from '@/services/contact';
 
 export default function HomeScreen() {
   const navigation = useNavigation<DrawerNavigationProp<any>>();
@@ -23,6 +25,7 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView edges={['top', 'left', 'right']} className='flex-1 bg-white'>
+      <StatusBar style='dark' />
       <AppHeader
         name={name}
         restaurantName={restaurant}
@@ -44,7 +47,14 @@ export default function HomeScreen() {
 
         <TodaysQueue
           onCallPress={item => {
-            console.log('Calling:', item.name);
+            if (item.mobileNumber) {
+              makeWhatsAppCall(item.mobileNumber);
+            }
+          }}
+          onWhatsAppPress={item => {
+            if (item.mobileNumber) {
+              openWhatsAppChat(item.mobileNumber);
+            }
           }}
           onAddCustomer={() => {
             router.push('/addqueue');

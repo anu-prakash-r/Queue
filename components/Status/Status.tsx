@@ -1,12 +1,13 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback } from 'react';
 import { Text, View } from 'react-native';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 import { useFocusEffect } from 'expo-router';
 
 import { useAuth } from '@/contexts/AuthContext';
-import { getQueues } from '@/services/queueApi';
-import { getTables } from '@/services/tableApi';
+import { useGetQueuesQuery } from '@/store/api/queueApi';
+import { useGetTablesQuery } from '@/store/api/tableApi';
+import QueueStatusSkeleton from '../SkeletonLoader/QueueStatusSkeleton';
 
 type QueueStatusItemProps = {
   icon: string;
@@ -104,45 +105,46 @@ export default function QueueStatus({
   waitTime = '18 m',
   servedCount = 25,
 }: QueueStatusProps) {
-  const { token } = useAuth();
+  const { token, isSuperAdmin, isRoleLoaded } = useAuth();
 
-  const [waitingCount, setWaitingCount] = useState(0);
+  const canLoad = isRoleLoaded && !isSuperAdmin;
 
-  const [tablesCount, setTablesCount] = useState(0);
+  const {
+    data: queueItems = [],
+    refetch: refetchQueues,
+    isLoading: isQueuesLoading,
+  } = useGetQueuesQuery('waiting', {
+    skip: !token || !canLoad,
+  });
 
-  const loadWaitingCount = useCallback(async () => {
-    if (!token) {
-      return;
-    }
+  const {
+    data: tablesResult,
+    refetch: refetchTables,
+    isLoading: isTablesLoading,
+  } = useGetTablesQuery(undefined, {
+    skip: !token || !canLoad,
+  });
 
-    try {
-      const queueItems = await getQueues(token, 'waiting');
-
-      setWaitingCount(queueItems.length);
-    } catch {
-      // keep the last known value on failure
-    }
-  }, [token]);
-
-  const loadTablesCount = useCallback(async () => {
-    try {
-      const { summary } = await getTables();
-
-      setTablesCount(summary.available);
-    } catch {
-      // keep the last known value on failure
-    }
-  }, []);
+  const waitingCount = queueItems.length;
+  const tablesCount = tablesResult?.summary?.available ?? 0;
 
   useFocusEffect(
     useCallback(() => {
-      loadWaitingCount();
-      loadTablesCount();
-    }, [loadWaitingCount, loadTablesCount]),
+      if (token && canLoad) {
+        refetchQueues();
+        refetchTables();
+      }
+    }, [token, canLoad, refetchQueues, refetchTables]),
   );
 
+  const isLoading = isQueuesLoading || isTablesLoading;
+
+  if (isLoading) {
+    return <QueueStatusSkeleton />;
+  }
+
   return (
-    <View className='px-5 bg-white'>
+    <View className='bg-white px-5'>
       <View className='flex-row gap-3'>
         <QueueStatusItem
           icon='groups'
@@ -172,7 +174,7 @@ export default function QueueStatus({
           iconColor='#EA580C'
           highlightText='Today'
           highlightColor='#EA580C'
-          highlightOnNewLine={true}
+          highlightOnNewLine
         />
 
         <QueueStatusItem
@@ -183,7 +185,7 @@ export default function QueueStatus({
           iconColor='#2563EB'
           highlightText='Today'
           highlightColor='#2563EB'
-          highlightOnNewLine={true}
+          highlightOnNewLine
         />
       </View>
     </View>

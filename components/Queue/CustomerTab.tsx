@@ -14,9 +14,7 @@ import {
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
 
-import { ApiError } from '@/services/api';
-
-import { CustomerItem, getCustomers } from '@/services/customerApi';
+import { useGetCustomersQuery, CustomerItem } from '@/store/api/customerApi';
 
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -32,11 +30,12 @@ const TEXT_GRAY = '#7B747F';
 export default function CustomerTab({ width }: CustomerTabProps) {
   const { token } = useAuth();
 
-  const [customers, setCustomers] = useState<CustomerItem[]>([]);
-
-  const [loading, setLoading] = useState(true);
-
-  const [error, setError] = useState<string | null>(null);
+  const {
+    data: customers = [],
+    isLoading: loading,
+    error,
+    refetch,
+  } = useGetCustomersQuery(undefined, { skip: !token });
 
   const [refreshing, setRefreshing] = useState(false);
 
@@ -44,44 +43,20 @@ export default function CustomerTab({ width }: CustomerTabProps) {
 
   const [detailsItem, setDetailsItem] = useState<CustomerItem | null>(null);
 
-  const fetchCustomers = useCallback(async () => {
-    try {
-      setError(null);
-
-      if (!token) {
-        setLoading(false);
-        return;
-      }
-
-      const items = await getCustomers(token);
-
-      setCustomers(Array.isArray(items) ? items : []);
-    } catch (err: unknown) {
-      let msg = 'Network error while fetching customers.';
-
-      if (err instanceof ApiError) {
-        msg = err.message;
-      } else if (err instanceof Error) {
-        msg = err.message;
-      }
-
-      setError(msg);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, [token]);
+  const errorText = error ? 'Unable to load. Please try again.' : null;
 
   useFocusEffect(
     useCallback(() => {
-      fetchCustomers();
-    }, [fetchCustomers]),
+      if (token) {
+        refetch();
+      }
+    }, [token, refetch]),
   );
 
   const handleRefresh = useCallback(() => {
     setRefreshing(true);
-    fetchCustomers();
-  }, [fetchCustomers]);
+    refetch().finally(() => setRefreshing(false));
+  }, [refetch]);
 
   const toggleExpanded = (id: number | string) => {
     setExpandedId(current => (current === id ? null : id));
@@ -276,11 +251,7 @@ export default function CustomerTab({ width }: CustomerTabProps) {
             Loading customers...
           </Text>
         </View>
-      ) : error ? (
-        /* ======================================================
-           ERROR
-        ====================================================== */
-
+      ) : errorText ? (
         <View className='flex-1 items-center justify-center px-8'>
           <View className='h-20 w-20 items-center justify-center rounded-full bg-[#FFF4F4]'>
             <MaterialCommunityIcons
@@ -295,11 +266,11 @@ export default function CustomerTab({ width }: CustomerTabProps) {
           </Text>
 
           <Text className='mt-2 text-center text-sm leading-5 text-[#7B747F]'>
-            {error}
+            {errorText}
           </Text>
 
           <TouchableOpacity
-            onPress={fetchCustomers}
+            onPress={() => refetch()}
             activeOpacity={0.8}
             className='mt-5 flex-row items-center rounded-xl bg-[#4d13af] px-5 py-3'
           >
@@ -309,10 +280,6 @@ export default function CustomerTab({ width }: CustomerTabProps) {
           </TouchableOpacity>
         </View>
       ) : (
-        /* ======================================================
-           CUSTOMER LIST
-        ====================================================== */
-
         <FlatList
           className='flex-1'
           data={customers}
