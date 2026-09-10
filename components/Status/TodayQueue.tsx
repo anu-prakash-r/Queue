@@ -1,9 +1,13 @@
-import React from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
+import React, { useCallback, useState } from 'react';
+import { ActivityIndicator, Text, TouchableOpacity, View } from 'react-native';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { router, useFocusEffect } from 'expo-router';
+
+import { useAuth } from '@/contexts/AuthContext';
+import { getQueues, QueueItem as QueueApiItem } from '@/services/queueApi';
 
 type QueueItem = {
-  id: number;
+  id: string | number;
   name: string;
   people: number;
   time: string;
@@ -11,158 +15,244 @@ type QueueItem = {
 };
 
 type TodaysQueueProps = {
-  data?: QueueItem[];
   onViewAll?: () => void;
   onCallPress?: (item: QueueItem) => void;
   onAddCustomer?: () => void;
   onManageTables?: () => void;
 };
 
-const defaultQueueData: QueueItem[] = [
-  {
-    id: 1,
-    name: 'Ravi Kumar',
-    people: 4,
-    time: '12:30 PM',
-    waitingTime: '18m',
-  },
-  {
-    id: 2,
-    name: 'Priya Sharma',
-    people: 2,
-    time: '12:34 PM',
-    waitingTime: '14m',
-  },
-  {
-    id: 3,
-    name: 'Suresh Babu',
-    people: 3,
-    time: '12:38 PM',
-    waitingTime: '10m',
-  },
-  {
-    id: 4,
-    name: 'Karthik M',
-    people: 5,
-    time: '12:45 PM',
-    waitingTime: '5m',
-  },
-];
+const MAX_ITEMS = 5;
+
+function formatTime(createdAt?: string): string {
+  if (!createdAt) {
+    return '--';
+  }
+
+  const date = new Date(createdAt);
+
+  if (isNaN(date.getTime())) {
+    return '--';
+  }
+
+  return date.toLocaleTimeString([], {
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+}
+
+function formatWaitingTime(item: QueueApiItem): string {
+  const value = item.estimated_wait ?? item.waiting_time;
+
+  if (value === undefined || value === null) {
+    return '--';
+  }
+
+  if (typeof value === 'number') {
+    return `${Math.round(value)}m`;
+  }
+
+  const parsed = Number(value);
+
+  if (!isNaN(parsed)) {
+    return `${Math.round(parsed)}m`;
+  }
+
+  return String(value);
+}
+
+function mapQueueItem(item: QueueApiItem): QueueItem {
+  return {
+    id: item.id ?? item.token_number ?? item.queue_number ?? '',
+    name:
+      item.customer_name ??
+      item.name ??
+      item.customer?.name ??
+      item.mobile_number ??
+      item.customer?.mobile_number ??
+      'Customer',
+    people: item.people ?? item.party_size ?? item.guests ?? 1,
+    time: formatTime(item.created_at),
+    waitingTime: formatWaitingTime(item),
+  };
+}
 
 export default function TodaysQueue({
-  data = defaultQueueData,
-  onViewAll,
   onCallPress,
   onAddCustomer,
-  onManageTables,
 }: TodaysQueueProps) {
+  const { token } = useAuth();
+
+  const [items, setItems] = useState<QueueItem[]>([]);
+
+  const [loading, setLoading] = useState(true);
+
+  const [error, setError] = useState('');
+
+  const loadQueue = useCallback(async () => {
+    if (!token) {
+      setLoading(false);
+
+      setError('');
+
+      setItems([]);
+
+      return;
+    }
+
+    setLoading(true);
+
+    setError('');
+
+    try {
+      const queueItems = await getQueues(token, 'waiting');
+
+      setItems(queueItems.slice(0, MAX_ITEMS).map(mapQueueItem));
+    } catch {
+      setError('Could not load the queue.');
+    } finally {
+      setLoading(false);
+    }
+  }, [token]);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadQueue();
+    }, [loadQueue]),
+  );
+
   return (
-    <View className="mt-6 px-5">
-      <View className="rounded-[24px] border border-[#E9E2ED] bg-white px-5 py-5 shadow-md">
-        <View className="mb-5 flex-row items-center justify-between">
-          <Text className="text-[20px] font-bold text-[#24113D]">
+    <View className='mt-6 px-5'>
+      <View className='rounded-[24px] border border-[#E9E2ED] bg-white px-5 py-5 shadow-md'>
+        <View className='mb-5 flex-row items-center justify-between'>
+          <Text className='text-[16px] font-bold text-[#24113D]'>
             Today&apos;s Queue
           </Text>
 
           <TouchableOpacity
-            className="flex-row items-center"
+            className='flex-row items-center'
             activeOpacity={0.7}
-            onPress={onViewAll}
+            onPress={() => router.push('/queue')}
           >
-            <Text className="text-[15px] font-semibold text-[#442F52]">
+            <Text className='text-[12px] font-semibold text-[#442F52]'>
               View All
             </Text>
 
-            <MaterialIcons name="chevron-right" size={24} color="#442F52" />
+            <MaterialIcons name='chevron-right' size={20} color='#442F52' />
           </TouchableOpacity>
         </View>
 
-        {data.map(item => (
-          <View
-            key={item.id}
-            className="mb-2 flex-row items-center rounded-xl border border-[#E9E2ED] bg-white px-3 py-3"
-          >
-            <View className="flex-1">
-              <Text
-                numberOfLines={1}
-                className="text-[15px] font-bold text-[#24113D]"
-              >
-                {item.name}
-              </Text>
-
-              <View className="mt-2 flex-row items-center">
-                <View className="flex-row items-center">
-                  <MaterialIcons
-                    name="person-outline"
-                    size={19}
-                    color="#777180"
-                  />
-
-                  <Text className="ml-1 text-[13px] text-[#4B4552]">
-                    {item.people} People
-                  </Text>
-                </View>
-
-                <View className="ml-2 flex-row items-center">
-                  <MaterialIcons name="access-time" size={18} color="#777180" />
-
-                  <Text className="ml-1 text-[13px] text-[#4B4552]">
-                    {item.time}
-                  </Text>
-                </View>
-              </View>
-            </View>
-
-            <View className="mr-3 items-center justify-center">
-              <Text
-                className={`text-[16px] font-semibold ${
-                  item.id === data.length ? 'text-[#EA580C]' : 'text-[#43943C]'
-                }`}
-              >
-                {item.waitingTime}
-              </Text>
-
-              <Text className="mt-0.5 text-[12px] text-[#4B4552]">Waiting</Text>
-            </View>
+        {loading ? (
+          <View className='items-center justify-center py-8'>
+            <ActivityIndicator size='small' color='#4B197C' />
+          </View>
+        ) : error ? (
+          <View className='items-center justify-center py-8'>
+            <Text className='text-[13px] text-[#4B4552]'>{error}</Text>
 
             <TouchableOpacity
-              className="h-[36px] w-[82px] flex-row items-center justify-center rounded-xl bg-[#4B197C]"
+              className='mt-3 rounded-xl bg-[#4B197C] px-5 py-2'
               activeOpacity={0.8}
-              onPress={() => onCallPress?.(item)}
+              onPress={loadQueue}
             >
-              <MaterialIcons name="phone" size={20} color="#FFFFFF" />
-
-              <Text className="ml-1.5 text-[14px] font-bold text-white">
-                CALL
-              </Text>
+              <Text className='text-[13px] font-bold text-white'>RETRY</Text>
             </TouchableOpacity>
           </View>
-        ))}
+        ) : items.length === 0 ? (
+          <View className='items-center justify-center py-8'>
+            <Text className='text-[13px] text-[#4B4552]'>
+              No customers waiting right now.
+            </Text>
+          </View>
+        ) : (
+          items.map(item => (
+            <View
+              key={String(item.id)}
+              className='mb-2 flex-row items-center rounded-xl border border-[#E9E2ED] bg-white px-3 py-3'
+            >
+              <View className='flex-1'>
+                <Text
+                  numberOfLines={1}
+                  className='text-[13px] font-bold text-[#24113D]'
+                >
+                  {item.name}
+                </Text>
 
-        <View className="mt-4 flex-row gap-3">
+                <View className='mt-2 flex-row items-center'>
+                  <View className='flex-row items-center'>
+                    <MaterialIcons
+                      name='person-outline'
+                      size={17}
+                      color='#777180'
+                    />
+
+                    <Text className='ml-1 text-[12px] text-[#4B4552]'>
+                      {item.people} People
+                    </Text>
+                  </View>
+
+                  <View className='ml-2 flex-row items-center'>
+                    <MaterialIcons
+                      name='access-time'
+                      size={17}
+                      color='#777180'
+                    />
+
+                    <Text className='ml-1 text-[12px] text-[#4B4552]'>
+                      {item.time}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+
+              <View className='mr-3 items-center justify-center'>
+                <Text className='text-[14px] font-semibold text-[#43943C]'>
+                  {item.waitingTime}
+                </Text>
+
+                <Text className='mt-0.5 text-[10px] text-[#4B4552]'>
+                  Waiting
+                </Text>
+              </View>
+
+              <TouchableOpacity
+                className='h-[34px] w-[80px] flex-row items-center justify-center rounded-xl bg-[#4B197C]'
+                activeOpacity={0.8}
+                onPress={() => onCallPress?.(item)}
+              >
+                <MaterialIcons name='phone' size={20} color='#FFFFFF' />
+
+                <Text className='ml-1.5 text-[14px] font-bold text-white'>
+                  CALL
+                </Text>
+              </TouchableOpacity>
+            </View>
+          ))
+        )}
+
+        <View className='mt-4 flex-row gap-3'>
           <TouchableOpacity
-            className="h-[44px] flex-1 flex-row items-center justify-center rounded-xl border-2 border-[#442F52] bg-white"
+            className='h-[44px] flex-1 flex-row items-center justify-center rounded-xl  bg-[#4B197C]'
             activeOpacity={0.7}
             onPress={onAddCustomer}
           >
-            <MaterialIcons name="person-add-alt-1" size={23} color="#442F52" />
+            <MaterialIcons name='person-add-alt-1' size={22} color='white' />
 
-            <Text className="ml-2 text-[14px] font-bold text-[#442F52]">
-              ADD CUSTOMER
+            <Text className='ml-2 text-[13px] font-bold text-white'>
+              ADD QUEUE
             </Text>
           </TouchableOpacity>
 
-          <TouchableOpacity
-            className="h-[44px] flex-1 flex-row items-center justify-center rounded-xl bg-[#4B197C]"
+          {/* <TouchableOpacity
+            className='h-[40px] flex-1 flex-row items-center justify-center rounded-xl bg-[#4B197C]'
             activeOpacity={0.8}
             onPress={onManageTables}
           >
-            <MaterialIcons name="grid-view" size={23} color="#FFFFFF" />
+            <MaterialIcons name='grid-view' size={22} color='#FFFFFF' />
 
-            <Text className="ml-2 text-[14px] font-bold text-white">
+            <Text className='ml-2 text-[13px] font-bold text-white'>
               MANAGE TABLES
             </Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
       </View>
     </View>

@@ -1,31 +1,43 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 
 import {
+  ActivityIndicator,
   ScrollView,
   Text,
   TouchableOpacity,
   View,
-  ActivityIndicator,
 } from 'react-native';
 
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 
 import { StatusBar } from 'expo-status-bar';
-
+import { router, useFocusEffect } from 'expo-router';
 import Toast from 'react-native-toast-message';
 
 import { ApiError } from '@/services/api';
 
-import { getTables, TableItem } from '@/services/tableApi';
-
+import { deleteTable, getTables, TableItem } from '@/services/tableApi';
+import TableStatusModal from '@/components/Tables/TableStatusModal';
 import TablesHeader from '@/components/Tables/TableHeader';
 import TableSearch from '@/components/Tables/TableSearch';
 import TableSummary from '@/components/Tables/TableSummary';
 import TableCard from '@/components/Tables/TableCard';
 import TablesFooter from '@/components/Tables/TablesFooter';
+import ConfirmationModal from '@/components/ConfirmationModal/ConfirmationModal';
+
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function TablesScreen() {
+  const { token } = useAuth();
+
   const [tables, setTables] = useState<TableItem[]>([]);
+
+  const [summary, setSummary] = useState({
+    total_tables: 0,
+    available: 0,
+    occupied: 0,
+    reserved: 0,
+  });
 
   const [loading, setLoading] = useState(true);
 
@@ -35,26 +47,49 @@ export default function TablesScreen() {
 
   const [sortAscending, setSortAscending] = useState(true);
 
-  /**
-   * Fetch tables from API
-   */
+  const [lastUpdated, setLastUpdated] = useState('');
+  const [statusModalVisible, setStatusModalVisible] = useState(false);
+
+  const [selectedTable, setSelectedTable] = useState<TableItem | null>(null);
+
+  const [deleteTarget, setDeleteTarget] = useState<TableItem | null>(null);
+
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const fetchTables = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
 
-      const data = await getTables();
+      const response = await getTables();
 
-      setTables(data);
+      setTables(Array.isArray(response.tables) ? response.tables : []);
+
+      setSummary({
+        total_tables:
+          response.summary?.total_tables ?? response.tables?.length ?? 0,
+
+        available: response.summary?.available ?? 0,
+
+        occupied: response.summary?.occupied ?? 0,
+
+        reserved: response.summary?.reserved ?? 0,
+      });
+
+      setLastUpdated(
+        new Date().toLocaleTimeString([], {
+          hour: '2-digit',
+          minute: '2-digit',
+        }),
+      );
     } catch (err: unknown) {
       let msg = 'Network error while fetching tables.';
 
       if (err instanceof ApiError) {
         msg = err.message;
       } else if (err instanceof Error) {
-        console.log('ERROR:', err.message);
-
         msg = err.message;
+      } else {
+        console.log('UNKNOWN ERROR:', err);
       }
 
       setError(msg);
@@ -70,54 +105,131 @@ export default function TablesScreen() {
     }
   }, []);
 
-  /**
-   * Load tables when screen opens
-   */
-  useEffect(() => {
-    fetchTables();
-  }, [fetchTables]);
+  useFocusEffect(
+    useCallback(() => {
+      fetchTables();
+    }, [fetchTables]),
+  );
 
   /**
-   * Filter and sort tables
+   * Search + Sort
    */
   const filteredTables = useMemo(() => {
     const searchText = search.toLowerCase().trim();
 
-    return [...tables]
-      .filter(table => table.id.toLowerCase().includes(searchText))
-      .sort((a, b) =>
-        sortAscending ? a.id.localeCompare(b.id) : b.id.localeCompare(a.id),
-      );
+    const tableArray: TableItem[] = Array.isArray(tables) ? tables : [];
+
+    return [...tableArray]
+      .filter(table => {
+        const tableId = String(table?.id ?? '').toLowerCase();
+
+        return tableId.includes(searchText);
+      })
+      .sort((a, b) => {
+        const aId = String(a?.id ?? '');
+
+        const bId = String(b?.id ?? '');
+
+        return sortAscending ? aId.localeCompare(bId) : bId.localeCompare(aId);
+      });
   }, [tables, search, sortAscending]);
 
   /**
-   * Summary
+   * Summary values
    */
-  const total = tables.length;
+  const total = summary.total_tables;
 
-  const available = tables.filter(table => table.status === 'Available').length;
+  const available = summary.available;
 
-  const occupied = tables.filter(table => table.status === 'Occupied').length;
+  const occupied = summary.occupied;
 
-  const reserved = tables.filter(table => table.status === 'Reserved').length;
+  const reserved = summary.reserved;
 
   /**
    * Table press
    */
-  const handleTablePress = (table: TableItem) => {
-    console.log('Selected table:', table);
+
+  const handleEditTable = (table: TableItem) => {
+    router.push({
+      pathname: '/addTable',
+      params: {
+        mode: 'edit',
+        id: String(table.id),
+        table: JSON.stringify(table),
+      },
+    });
   };
 
-  /**
-   * Sort
-   */
+  const handleUpdateTable = (table: TableItem) => {
+    setSelectedTable(table);
+    setStatusModalVisible(true);
+  };
+
+  const handleDeleteTable = (table: TableItem) => {
+    setDeleteTarget(table);
+  };
+
+  const confirmDeleteTable = async () => {
+    if (!deleteTarget || !token) {
+      return;
+    }
+
+    const tableId = deleteTarget.id;
+
+    try {
+      setDeleteLoading(true);
+
+      const response = await deleteTable(String(tableId), token);
+
+      const failed = Boolean(response && response.success === false);
+
+      if (!failed) {
+        setTables(prev =>
+          Array.isArray(prev) ? prev.filter(item => item.id !== tableId) : [],
+        );
+
+        Toast.show({
+          type: 'success',
+          text1: 'Table Deleted',
+          text2: `Table T${deleteTarget.table_number} has been deleted successfully.`,
+          visibilityTime: 3000,
+        });
+
+        setDeleteTarget(null);
+      } else {
+        const message = response?.message ?? 'Failed to delete table.';
+
+        Toast.show({
+          type: 'error',
+          text1: 'Delete Failed',
+          text2: message,
+          visibilityTime: 4000,
+        });
+      }
+    } catch (error: unknown) {
+      let message = 'Network error while deleting the table.';
+
+      if (error instanceof ApiError) {
+        message = error.message;
+      } else if (error instanceof Error) {
+        message = error.message;
+      }
+
+      Toast.show({
+        type: 'error',
+        text1: 'Delete Failed',
+        text2: message,
+        visibilityTime: 4000,
+      });
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
   const handleSort = () => {
-    setSortAscending(prev => !prev);
+    setSortAscending(previous => !previous);
   };
 
-  /**
-   * Refresh
-   */
   const handleRefresh = () => {
     fetchTables();
   };
@@ -158,7 +270,7 @@ export default function TablesScreen() {
             All Tables
           </Text>
 
-          <TouchableOpacity
+          {/* <TouchableOpacity
             activeOpacity={0.7}
             onPress={handleSort}
             className='flex-row items-center'
@@ -175,7 +287,7 @@ export default function TablesScreen() {
                 marginLeft: 5,
               }}
             />
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
 
         <View className='mt-5 px-5'>
@@ -188,6 +300,7 @@ export default function TablesScreen() {
               </Text>
             </View>
           ) : error ? (
+            /* Error */
             <View className='items-center rounded-2xl bg-white px-6 py-16'>
               <View className='h-16 w-16 items-center justify-center rounded-full bg-[#F1EAF5]'>
                 <MaterialIcons name='error-outline' size={32} color='#35116B' />
@@ -212,6 +325,7 @@ export default function TablesScreen() {
               </TouchableOpacity>
             </View>
           ) : filteredTables.length === 0 ? (
+            /* Empty */
             <View className='items-center rounded-2xl bg-white px-6 py-16'>
               <View className='h-16 w-16 items-center justify-center rounded-full bg-[#F1EAF5]'>
                 <MaterialIcons
@@ -248,18 +362,55 @@ export default function TablesScreen() {
           ) : (
             filteredTables.map(table => (
               <TableCard
-                key={table.id}
+                key={String(table.id)}
                 table={table}
-                onPress={handleTablePress}
+                onUpdate={handleUpdateTable}
+                onEdit={handleEditTable}
+                onDelete={handleDeleteTable}
               />
             ))
           )}
         </View>
 
-        <TablesFooter
-          total={total}
-          lastUpdated='09:40 AM'
-          onRefresh={handleRefresh}
+        {total > 0 && (
+          <TablesFooter
+            total={total}
+            lastUpdated={lastUpdated}
+            onRefresh={handleRefresh}
+          />
+        )}
+
+        <TableStatusModal
+          visible={statusModalVisible}
+          table={selectedTable}
+          onClose={() => {
+            setStatusModalVisible(false);
+            setSelectedTable(null);
+          }}
+          onUpdated={() => {
+            fetchTables();
+          }}
+        />
+
+        <ConfirmationModal
+          visible={deleteTarget !== null}
+          title='Delete Table?'
+          message={
+            deleteTarget
+              ? `Are you sure you want to delete T${deleteTarget.table_number}? This action cannot be undone.`
+              : ''
+          }
+          icon='delete-outline'
+          confirmText='Delete'
+          cancelText='Cancel'
+          destructive
+          loading={deleteLoading}
+          onCancel={() => {
+            if (!deleteLoading) {
+              setDeleteTarget(null);
+            }
+          }}
+          onConfirm={confirmDeleteTable}
         />
       </ScrollView>
     </View>

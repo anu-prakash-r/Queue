@@ -26,18 +26,15 @@ export default function SplashScreenComponent() {
   const logoHeight = Math.min(logoWidth * SVG_ASPECT, height * 0.42);
 
   useEffect(() => {
-    // Fade‑in animation
     Animated.timing(fade, {
       toValue: 1,
       duration: 450,
       useNativeDriver: true,
     }).start();
 
-    // Determine initial screen based on persisted auth token
     const navigateInitial = async () => {
       try {
         const token = await SecureStore.getItemAsync('accessToken');
-        // If a token exists, skip onboarding and go straight to the main app tabs
         if (token) {
           router.replace('/home');
         } else {
@@ -59,7 +56,7 @@ export default function SplashScreenComponent() {
 
   return (
     <View style={styles.container}>
-      <StatusBar style="dark" />
+      <StatusBar style='dark' />
       <Animated.View style={[styles.content, { opacity: fade }]}>
         <QueueSvg width={logoWidth} height={logoHeight} />
         <Text style={styles.title}>Queue</Text>

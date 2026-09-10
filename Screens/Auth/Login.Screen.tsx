@@ -22,11 +22,10 @@ import CountryPicker, {
   Country,
   CountryCode,
 } from 'react-native-country-picker-modal';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 
 import { OnboardSvg, SarasSvg } from '@/assets/Svg';
-import { sendOtp } from '@/services/authApi';
-import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
-import { verifyOtp } from '@/services/authApi';
+import { sendOtp, verifyOtp } from '@/services/authApi';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function LoginScreen() {
@@ -37,6 +36,7 @@ export default function LoginScreen() {
   }>();
 
   const cameFromRegister = params.from === 'register';
+
   const { token, setToken, isSuperAdmin } = useAuth();
 
   const [step, setStep] = useState<1 | 2>(params.step === '2' ? 2 : 1);
@@ -55,14 +55,13 @@ export default function LoginScreen() {
   const [callingCode, setCallingCode] = useState('91');
 
   const [countryPickerVisible, setCountryPickerVisible] = useState(false);
+
   const [isSendingOtp, setIsSendingOtp] = useState(false);
 
   const otpInputs = useRef<TextInput[]>([]);
 
-  // Redirect if already authenticated
   useEffect(() => {
     if (token) {
-      // User already has a token; go to home screen directly
       router.replace('/home');
     }
   }, [token]);
@@ -191,15 +190,22 @@ export default function LoginScreen() {
     }
 
     try {
-      const response = await verifyOtp({ mobile_number: mobile, otp });
-      if (response.success && response.token) {
-        setToken(response.token);
+      const response = await verifyOtp({
+        mobile_number: mobile,
+        otp,
+      });
+
+      const token = response.data?.token ?? response.token;
+
+      if (response.success && token) {
+        await setToken(token);
         router.replace('/home');
       } else {
         Alert.alert('Verification Failed', response.message || 'Invalid OTP');
       }
     } catch (error) {
       const msg = error instanceof Error ? error.message : 'Verification error';
+
       Alert.alert('Error', msg);
     }
   };
@@ -264,7 +270,7 @@ export default function LoginScreen() {
               <TouchableOpacity
                 activeOpacity={0.7}
                 onPress={handleOtpBack}
-                className='absolute left-0 top-0 z-10 h-11 w-11 items-center justify-center rounded-full bg-[#F4EFF7]'
+                className='absolute left-3 top-12 z-10 h-10 w-10 items-center justify-center rounded-full bg-[#F4EFF7]'
               >
                 <MaterialIcons name='arrow-back' size={24} color='#351467' />
               </TouchableOpacity>
@@ -301,7 +307,7 @@ export default function LoginScreen() {
                   Mobile Number
                 </Text>
 
-                <View className='h-[58px] flex-row items-center rounded-2xl border border-zinc-300'>
+                <View className='h-[50px] flex-row items-center rounded-2xl border border-zinc-300'>
                   <TouchableOpacity
                     className='h-full flex-row items-center px-4'
                     onPress={() => setCountryPickerVisible(true)}
@@ -322,20 +328,20 @@ export default function LoginScreen() {
                       }}
                     />
 
-                    <Text className='ml-1 text-[16px] font-medium text-[#342A3D]'>
+                    <Text className='text-[16px] font-medium text-[#342A3D]'>
                       +{callingCode}
                     </Text>
 
-                    <View className='ml-2'>
+                    <View className=''>
                       <AntDesign name='down' size={12} color='#342A3D' />
                     </View>
                   </TouchableOpacity>
 
-                  <View className='h-[58px] w-[1px] bg-zinc-300' />
+                  <View className='h-[50px] w-[1px] bg-zinc-300' />
 
                   <TextInput
-                    className='flex-1 px-3 text-[17px] text-[#29212F]'
-                    placeholder='98765 43210'
+                    className='flex-1 px-1 text-[17px] text-[#29212F]'
+                    placeholder='Enter Whatsapp number'
                     placeholderTextColor='#9294A5'
                     keyboardType='phone-pad'
                     maxLength={10}
@@ -349,7 +355,7 @@ export default function LoginScreen() {
                 </View>
 
                 <TouchableOpacity
-                  className='mt-6 h-[58px] flex-row items-center justify-center rounded-2xl bg-[#6C2BD9]'
+                  className='mt-6 h-[50px] flex-row items-center justify-center rounded-2xl bg-[#6C2BD9]'
                   onPress={handleGetOTP}
                   activeOpacity={0.8}
                   disabled={isSendingOtp}
@@ -360,7 +366,7 @@ export default function LoginScreen() {
                     <>
                       <FontAwesome5 name='whatsapp' size={24} color='white' />
 
-                      <Text className='ml-3 text-[16px] font-bold tracking-wide text-white'>
+                      <Text className='ml-3 text-[14px] font-bold tracking-wide text-white'>
                         GET WHATSAPP OTP
                       </Text>
                     </>
@@ -405,7 +411,6 @@ export default function LoginScreen() {
 
             {step === 2 && (
               <>
-                {/* OTP Header */}
                 <View className='mt-12 items-center'>
                   <Text className='text-[30px] font-bold text-[#24113D]'>
                     Verify Otp
@@ -429,9 +434,7 @@ export default function LoginScreen() {
                 </Text>
 
                 <View className='mt-4 flex-row justify-between'>
-                  {Array.from({
-                    length: 6,
-                  }).map((_, index) => (
+                  {Array.from({ length: 6 }).map((_, index) => (
                     <TextInput
                       key={index}
                       ref={ref => {
@@ -452,7 +455,7 @@ export default function LoginScreen() {
                   ))}
                 </View>
 
-                {timer > 0 ? (
+                {/* {timer > 0 ? (
                   <Text className='mt-5 text-center text-[16px] text-[#24113D]'>
                     Resend OTP in {formattedTimer}
                   </Text>
@@ -466,7 +469,7 @@ export default function LoginScreen() {
                       Resend OTP
                     </Text>
                   </TouchableOpacity>
-                )}
+                )} */}
 
                 <View className='mt-6 flex-row items-center rounded-2xl bg-zinc-100 px-4 py-4'>
                   <View className='mr-3 h-10 w-10 items-center justify-center rounded-full'>
@@ -484,19 +487,19 @@ export default function LoginScreen() {
                 </View>
 
                 <TouchableOpacity
-                  className='mt-6 h-[58px] flex-row items-center justify-center rounded-2xl bg-[#6C2BD9]'
+                  className='mt-6 h-[50px] flex-row items-center justify-center rounded-2xl bg-[#6C2BD9]'
                   onPress={handleVerifyOTP}
                   activeOpacity={0.8}
                 >
                   <MaterialIcons name='lock-outline' size={24} color='white' />
 
-                  <Text className='ml-2 text-[16px] font-bold tracking-wide text-white'>
+                  <Text className='ml-2 text-[14px] font-bold tracking-wide text-white'>
                     VERIFY & LOGIN
                   </Text>
                 </TouchableOpacity>
 
                 <View className='mt-12 flex-row items-center'>
-                  <View className='h-[2px] flex-1 bg-[#D8C6E5]' />
+                  <View className='h-[1px] flex-1 bg-zinc-300' />
 
                   <View className='px-4'>
                     <Text className='text-[16px] font-medium text-[#777180]'>
@@ -504,7 +507,7 @@ export default function LoginScreen() {
                     </Text>
                   </View>
 
-                  <View className='h-[2px] flex-1 bg-[#D8C6E5]' />
+                  <View className='h-[1px] flex-1 bg-zinc-300' />
                 </View>
 
                 <TouchableOpacity

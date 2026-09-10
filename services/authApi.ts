@@ -24,9 +24,10 @@ export type CreateTablePayload = {
 };
 
 export type CreateTableResponse = {
-  success?: boolean;
+  success: boolean;
   message?: string;
-  data?: any; // adjust based on backend response structure
+  data?: unknown;
+  errors?: Record<string, string[]>;
 };
 
 export async function sendOtp(
@@ -46,6 +47,9 @@ export type VerifyOtpResponse = {
   success?: boolean;
   message?: string;
   token?: string;
+  data?: {
+    token?: string;
+  };
 };
 
 export async function verifyOtp(

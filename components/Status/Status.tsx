@@ -1,7 +1,12 @@
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import { Text, View } from 'react-native';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
+import { useFocusEffect } from 'expo-router';
+
+import { useAuth } from '@/contexts/AuthContext';
+import { getQueues } from '@/services/queueApi';
+import { getTables } from '@/services/tableApi';
 
 type QueueStatusItemProps = {
   icon: string;
@@ -91,18 +96,51 @@ const QueueStatusItem = ({
 };
 
 type QueueStatusProps = {
-  waitingCount?: number;
-  tablesCount?: number;
   waitTime?: string;
   servedCount?: number;
 };
 
 export default function QueueStatus({
-  waitingCount = 10,
-  tablesCount = 8,
   waitTime = '18 m',
   servedCount = 25,
 }: QueueStatusProps) {
+  const { token } = useAuth();
+
+  const [waitingCount, setWaitingCount] = useState(0);
+
+  const [tablesCount, setTablesCount] = useState(0);
+
+  const loadWaitingCount = useCallback(async () => {
+    if (!token) {
+      return;
+    }
+
+    try {
+      const queueItems = await getQueues(token, 'waiting');
+
+      setWaitingCount(queueItems.length);
+    } catch {
+      // keep the last known value on failure
+    }
+  }, [token]);
+
+  const loadTablesCount = useCallback(async () => {
+    try {
+      const { summary } = await getTables();
+
+      setTablesCount(summary.available);
+    } catch {
+      // keep the last known value on failure
+    }
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadWaitingCount();
+      loadTablesCount();
+    }, [loadWaitingCount, loadTablesCount]),
+  );
+
   return (
     <View className='px-5 bg-white'>
       <View className='flex-row gap-3'>

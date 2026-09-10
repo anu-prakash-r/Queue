@@ -16,38 +16,38 @@ export default function TableSummary({
   reserved,
 }: Props) {
   return (
-    <View className="mt-5 px-5">
-      <View className="flex-row gap-2">
+    <View className='mt-5 px-5'>
+      <View className='flex-row gap-2'>
         <TableSummaryCard
-          icon="table-restaurant"
+          icon='table-restaurant'
           value={total}
-          label="Total Tables"
-          color="#229B39"
-          bgColor="#EAF8EC"
+          label='Total Tables'
+          color='#229B39'
+          bgColor='#EAF8EC'
         />
 
         <TableSummaryCard
-          icon="check-circle-outline"
+          icon='check-circle-outline'
           value={available}
-          label="Available"
-          color="#229B39"
-          bgColor="#EAF8EC"
+          label='Available'
+          color='#229B39'
+          bgColor='#EAF8EC'
         />
 
         <TableSummaryCard
-          icon="people-outline"
+          icon='people-outline'
           value={occupied}
-          label="Occupied"
-          color="#F28C00"
-          bgColor="#FFF4E5"
+          label='Occupied'
+          color='#F28C00'
+          bgColor='#FFF4E5'
         />
 
         <TableSummaryCard
-          icon="remove-circle-outline"
+          icon='remove-circle-outline'
           value={reserved}
-          label="Reserved"
-          color="#E31B23"
-          bgColor="#FDEBEC"
+          label='Reserved'
+          color='#E31B23'
+          bgColor='#FDEBEC'
         />
       </View>
     </View>

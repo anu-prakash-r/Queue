@@ -1,4 +1,4 @@
-import { HomeSvg, Profile, Queue, Table } from '@/assets/Svg/NavBar';
+import { HomeSvg, Profile, Queue, Table, Manage } from '@/assets/Svg/NavBar';
 
 import {
   DrawerContentComponentProps,
@@ -12,6 +12,7 @@ import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useAuth } from '@/contexts/AuthContext';
+import { useUserProfile } from '@/hooks/useUserProfile';
 
 const PURPLE = '#442F52';
 const INACTIVE = '#777180';
@@ -39,6 +40,12 @@ const DRAWER_ITEMS = [
     icon: Table,
   },
   {
+    label: 'Manage',
+    href: '/(app)/(tabs)/manage' as const,
+    match: 'manage',
+    icon: Manage,
+  },
+  {
     label: 'Profile',
     href: '/(app)/(tabs)/profile' as const,
     match: 'profile',
@@ -48,7 +55,13 @@ const DRAWER_ITEMS = [
 
 export default function AppDrawerContent(props: DrawerContentComponentProps) {
   const pathname = usePathname();
-  const { logout } = useAuth();
+  const { logout, isSuperAdmin } = useAuth();
+
+  const { name, restaurant } = useUserProfile();
+
+  const drawerItems = isSuperAdmin
+    ? DRAWER_ITEMS
+    : DRAWER_ITEMS.filter(item => item.match !== 'profile');
 
   const handleLogout = () => {
     Alert.alert('Logout', 'Are you sure you want to logout?', [
@@ -75,21 +88,21 @@ export default function AppDrawerContent(props: DrawerContentComponentProps) {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
         <View style={styles.logoContainer}>
-          <MaterialIcons name="restaurant" size={25} color="#FFFFFF" />
+          <MaterialIcons name='restaurant' size={25} color='#FFFFFF' />
         </View>
 
         <View style={styles.headerText}>
-          <Text style={styles.brand}>Queue</Text>
-          <Text style={styles.subtitle}>Dark Restaurant</Text>
+          <Text style={styles.brand}>{name || 'Queue'}</Text>
+          <Text style={styles.subtitle}>
+            {restaurant || 'Your Restaurant'}
+          </Text>
         </View>
       </View>
 
       <View style={styles.divider} />
 
-      {/* Menu */}
       <DrawerContentScrollView
         {...props}
         showsVerticalScrollIndicator={false}
@@ -97,7 +110,7 @@ export default function AppDrawerContent(props: DrawerContentComponentProps) {
       >
         <Text style={styles.menuTitle}>MENU</Text>
 
-        {DRAWER_ITEMS.map(item => {
+        {drawerItems.map(item => {
           const focused = pathname.includes(item.match);
           const color = focused ? PURPLE : INACTIVE;
           const Icon = item.icon;
@@ -110,7 +123,7 @@ export default function AppDrawerContent(props: DrawerContentComponentProps) {
               activeTintColor={PURPLE}
               inactiveTintColor={INACTIVE}
               activeBackgroundColor={ACTIVE_BG}
-              pressColor="#F7F4F8"
+              pressColor='#F7F4F8'
               labelStyle={[
                 styles.label,
                 {
@@ -137,7 +150,6 @@ export default function AppDrawerContent(props: DrawerContentComponentProps) {
         })}
       </DrawerContentScrollView>
 
-      {/* Bottom Section */}
       <View style={styles.bottomSection}>
         <View style={styles.divider} />
 
@@ -147,7 +159,7 @@ export default function AppDrawerContent(props: DrawerContentComponentProps) {
           style={styles.logoutButton}
         >
           <View style={styles.logoutIcon}>
-            <MaterialIcons name="logout" size={23} color="#C0392B" />
+            <MaterialIcons name='logout' size={23} color='#C0392B' />
           </View>
 
           <Text style={styles.logoutText}>Logout</Text>

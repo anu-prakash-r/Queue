@@ -75,7 +75,6 @@ export default function ProfileScreen() {
 
   const handleOwnerList = () => {
     router.push('/ownerlist');
-   
   };
 
   const handleLogout = () => {
@@ -118,7 +117,6 @@ export default function ProfileScreen() {
           paddingBottom: 20,
         }}
       >
-        {/* Page Header */}
         <View className='mb-5'>
           <Text className='text-[25px] font-bold text-[#442F52]'>Profile</Text>
 
@@ -137,17 +135,14 @@ export default function ProfileScreen() {
           </View>
         ) : (
           <>
-            {/* Profile Card */}
             <View className='mb-6 rounded-2xl bg-white p-5'>
               <View className='flex-row items-center'>
-                {/* Avatar */}
                 <View className='h-[60px] w-[60px] items-center justify-center rounded-full bg-[#F1EAF5]'>
                   <Text className='text-[27px] font-bold text-[#442F52]'>
                     {firstLetter}
                   </Text>
                 </View>
 
-                {/* Name */}
                 <View className='ml-4 flex-1'>
                   <Text className='text-[19px] font-bold text-[#442F52]'>
                     {profile?.name ?? 'User'}
@@ -160,7 +155,6 @@ export default function ProfileScreen() {
                   ) : null}
                 </View>
 
-                {/* Create Owner */}
                 {isSuperAdmin ? (
                   <TouchableOpacity
                     activeOpacity={0.7}
@@ -182,13 +176,11 @@ export default function ProfileScreen() {
               </View>
             </View>
 
-            {/* Account Information */}
             <Text className='mb-3 ml-1 text-[12px] font-bold uppercase tracking-wide text-[#8D8791]'>
               Account Information
             </Text>
 
             <View className='mb-6 rounded-2xl bg-white'>
-              {/* Email Address */}
               <View className='flex-row items-center px-4 py-4'>
                 <View className='h-11 w-11 items-center justify-center rounded-xl bg-[#F1EAF5]'>
                   <MaterialIcons name='email' size={21} color='#442F52' />
@@ -207,7 +199,6 @@ export default function ProfileScreen() {
 
               <View className='ml-[72px] h-[1px] bg-[#F0EDF2]' />
 
-              {/* Mobile Number */}
               {profile?.mobile ? (
                 <>
                   <View className='flex-row items-center px-4 py-4'>
@@ -230,7 +221,6 @@ export default function ProfileScreen() {
                 </>
               ) : null}
 
-              {/* Restaurant */}
               {profile?.restaurant ? (
                 <>
                   <View className='flex-row items-center px-4 py-4'>
@@ -257,7 +247,6 @@ export default function ProfileScreen() {
                 </>
               ) : null}
 
-              {/* Role */}
               <View className='flex-row items-center px-4 py-4'>
                 <View className='h-11 w-11 items-center justify-center rounded-xl bg-[#F1EAF5]'>
                   <MaterialIcons
@@ -278,7 +267,6 @@ export default function ProfileScreen() {
 
               <View className='ml-[72px] h-[1px] bg-[#F0EDF2]' />
 
-              {/* Owner List - Super Admin Only */}
               {isSuperAdmin ? (
                 <TouchableOpacity
                   activeOpacity={0.7}
@@ -315,7 +303,6 @@ export default function ProfileScreen() {
         )}
       </ScrollView>
 
-      {/* Logout Footer */}
       <View className='border-t border-[#F0EDF2] bg-white px-5 pb-3 pt-3'>
         <TouchableOpacity
           activeOpacity={0.7}
